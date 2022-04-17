@@ -1,0 +1,2 @@
+# earthsci.dev
+EarthSciML website
