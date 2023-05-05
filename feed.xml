@@ -9,52 +9,71 @@
 
   <channel>
     <title>
-      <![CDATA[  Franklin Template  ]]>
+      <![CDATA[  EarthSciML  ]]>
     </title>
-    <link> https://tlienart.github.io/FranklinTemplates.jl/ </link>
+    <link> https://earthsci.dev/ </link>
     <description>
-      <![CDATA[  Example website using Franklin  ]]>
+      <![CDATA[  Earth Science Machine Learning  ]]>
     </description>
     <atom:link
-      href="https://tlienart.github.io/FranklinTemplates.jl/feed.xml"
+      href="https://earthsci.dev/feed.xml"
       rel="self"
       type="application/rss+xml" />
 
 
 <item>
   <title>
-    <![CDATA[  More goodies  ]]>
+    <![CDATA[  Getting Started with EarthSciML  ]]>
   </title>
-  <link>  </link>
-  <guid>  </guid>
+  <link> https://earthsci.dev/tutorials/getting_started/index.html </link>
+  <guid> https://earthsci.dev/tutorials/getting_started/index.html </guid>
   <description>
-    <![CDATA[  A short description of the page which would serve as <strong>blurb</strong> in a <code>RSS</code> feed; you can use basic markdown here but the whole description string must be a single line &#40;not a multiline string&#41;. Like this one for instance. Keep in mind that styling is minimal in RSS so for instance don&#39;t expect maths or fancy styling to work; images should be ok though: <img src="https://upload.wikimedia.org/wikipedia/en/b/b0/Rick_and_Morty_characters.jpg" alt="" />  ]]>
+    <![CDATA[  Getting started with EarthSciML  ]]>
   </description>  
     
-  <pubDate>Wed, 01 May 2019 00:00:00 +0000</pubDate>  
+  <pubDate>Fri, 05 May 2023 00:00:00 +0000</pubDate>  
   
   
   <atom:author>
-    <atom:name>Septimia Zenobia</atom:name>
+    <atom:name>EarthSciML Authors and Contributors</atom:name>
   </atom:author>
         
 </item>
 
 <item>
   <title>
-    <![CDATA[  Code blocks  ]]>
+    <![CDATA[  Contributing  ]]>
   </title>
-  <link> https://tlienart.github.io/FranklinTemplates.jl/menu1/index.html </link>
-  <guid> https://tlienart.github.io/FranklinTemplates.jl/menu1/index.html </guid>
+  <link> https://earthsci.dev/contributing/index.html </link>
+  <guid> https://earthsci.dev/contributing/index.html </guid>
   <description>
-    <![CDATA[  A short description of the page which would serve as <strong>blurb</strong> in a <code>RSS</code> feed; you can use basic markdown here but the whole description string must be a single line &#40;not a multiline string&#41;. Like this one for instance. Keep in mind that styling is minimal in RSS so for instance don&#39;t expect maths or fancy styling to work; images should be ok though: <img src="https://upload.wikimedia.org/wikipedia/en/3/32/Rick_and_Morty_opening_credits.jpeg" alt="" />  ]]>
+    <![CDATA[  How to contribute  ]]>
   </description>  
     
-  <pubDate>Fri, 22 Mar 2019 00:00:00 +0000</pubDate>  
+  <pubDate>Fri, 05 May 2023 00:00:00 +0000</pubDate>  
   
   
   <atom:author>
-    <atom:name>Septimia Zenobia</atom:name>
+    <atom:name>EarthSciML Authors and Contributors</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title>
+    <![CDATA[  EarthSciML Example  ]]>
+  </title>
+  <link> https://earthsci.dev/tutorials/example/index.html </link>
+  <guid> https://earthsci.dev/tutorials/example/index.html </guid>
+  <description>
+    <![CDATA[  EarthSciML Example  ]]>
+  </description>  
+    
+  <pubDate>Fri, 05 May 2023 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>EarthSciML Authors and Contributors</atom:name>
   </atom:author>
         
 </item>
