@@ -22,8 +22,8 @@ using EarthSciData, EarthSciMLBase, GasChem,
 
 @parameters t lev lon lat
 model = SuperFast(t)
-ls = latexify(model.sys) # TODO: Change to model.rxn_sys
-print(ls.s) # hide
+ls = latexify(model.rxn_sys) # TODO: Change to model.rxn_sys
+print(replace(ls.s, "\require{mhchem}" => "")) # hide
 ```
 
 This is what `ls` looks like:
@@ -53,6 +53,8 @@ plot(sol,ylims=(0,15),xlabel="Date", ylabel="Concentration (ppb)", ylabelfontsiz
 savefig(joinpath(@OUTPUT, "ode.svg")) # hide
 ```
 
+\textoutput{./code/ex2}
+
 \fig{ode}
 
 ## Figure 3
@@ -75,10 +77,13 @@ Base.:(+)(e::Emissions, b::SuperFast) = operator_compose(b, e)
 Base.:(+)(b::SuperFast, e::Emissions) = e + b
 ```
 
+\textoutput{./code/ex3}
+
 ## Supplemental code to skip unit enforcement
 ```julia:./code/ex4
 function ModelingToolkit.check_units(eqs...) # Skip unit enforcement for now
-    ModelingToolkit.validate(eqs...) || @info "Some equations had invalid units. See warnings for details."
+    nothing
+    #ModelingToolkit.validate(eqs...) || @info "Some equations had invalid units. See warnings for details."
 end
 
 # Skip returning the observed variables (i.e. variables that are not state variables)
@@ -86,6 +91,8 @@ end
 SciMLBase.observed(sol::SciMLBase.AbstractTimeseriesSolution, sym, i::Colon) = zeros(Float64, length(sol.t))
 ```
  
+\textoutput{./code/ex4}
+
 ## Figure 4
 ```julia:./code/ex5
 domain = DomainInfo(
@@ -102,6 +109,8 @@ discretization = MOLFiniteDifference([lon => 50], t, approx_order=2)
 prob = discretize(get_mtk(model), discretization)
 sol = solve(prob, TRBDF2(), saveat=3600.0)
 ```
+
+\textoutput{./code/ex5}
 
 ## Supplemental plotting code
 ```julia:./code/ex6
@@ -130,3 +139,7 @@ plot(
 )
 savefig(joinpath(@OUTPUT, "pde.svg"))
 ```
+
+\textoutput{./code/ex6}
+
+\fig{pde}

@@ -935,6 +935,7 @@ a.pure-button-selected {
 }
 
 .pure-menu-heading,
+.pure-menu-subheading,
 .pure-menu-link {
   display: block;
   text-decoration: none;
@@ -951,6 +952,7 @@ a.pure-button-selected {
 }
 
 .pure-menu-horizontal .pure-menu-heading,
+.pure-menu-horizontal .pure-menu-subheading,
 .pure-menu-horizontal .pure-menu-item,
 .pure-menu-horizontal .pure-menu-separator {
   display: inline-block;
@@ -1053,6 +1055,7 @@ a.pure-button-selected {
 
 .pure-menu-disabled,
 .pure-menu-heading,
+.pure-menu-subheading,
 .pure-menu-link {
   padding: 0.5em 1em;
 }
