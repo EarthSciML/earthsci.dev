@@ -1,71 +1,87 @@
-<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/libs/highlight/styles/github.min.css"> <link rel=stylesheet  href="/css/franklin.css"> <link rel=stylesheet  href="/css/pure.css"> <link rel=stylesheet  href="/css/side-menu.css"> <style> .franklin-content{padding-left:10%;} @media (min-width: 940px) { .franklin-content {width: 640px; margin-left: 0px; padding-left: 80px;} .header {width: 700px;} } </style> <link rel=icon  href="/assets/favicon.png"> <title>EarthSciML Example</title> <div id=layout > <a href="#menu" id=menuLink  class=menu-link ><span></span></a> <div id=menu > <div class=pure-menu > <a class=pure-menu-heading  href="/">EarthSciML</a> <ul class=pure-menu-list > <li class="pure-menu-item "><a href="/" class=pure-menu-link >Home</a> <li class="pure-menu-item "><a href="/tutorials/getting_started/" class=pure-menu-link >Getting Started</a> <li class="pure-menu-item pure-menu-selected"><a href="/tutorials/example/" class=pure-menu-link >Example</a> <li class="pure-menu-item "><a href="/contributing/" class=pure-menu-link >Contributing</a> </ul> </div> </div> <div id=main > <div class=header > <h1>EarthSciML Example</h1> <h2></h2> </div> <div class=franklin-content > <h1 id=example ><a href="#example" class=header-anchor >Example</a></h1> <div class=franklin-toc ><ol><li><a href="#figure_1">Figure 1</a><li><a href="#figure_2">Figure 2</a><li><a href="#supplemental_plotting_code">Supplemental plotting code</a><li><a href="#figure_3">Figure 3</a><li><a href="#supplemental_code_to_skip_unit_enforcement">Supplemental code to skip unit enforcement</a><li><a href="#figure_4">Figure 4</a><li><a href="#supplemental_plotting_code__2">Supplemental plotting code</a></ol></div> <h2 id=figure_1 ><a href="#figure_1" class=header-anchor >Figure 1</a></h2> <pre><code class="julia hljs"><span class=hljs-keyword >using</span> EarthSciData, EarthSciMLBase, GasChem,
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/libs/katex/katex.min.css"> <link rel=stylesheet  href="/libs/highlight/styles/github.min.css"> <link rel=stylesheet  href="/css/franklin.css"> <link rel=stylesheet  href="/css/pure.css"> <link rel=stylesheet  href="/css/side-menu.css"> <style> .franklin-content{padding-left:10%;} @media (min-width: 940px) { .franklin-content {width: 640px; margin-left: 0px; padding-left: 80px;} .header {width: 700px;} } </style> <link rel=icon  href="/assets/favicon.png"> <title>EarthSciML Example</title> <div id=layout > <a href="#menu" id=menuLink  class=menu-link ><span></span></a> <div id=menu > <div class=pure-menu > <a class=pure-menu-heading  href="/">EarthSciML</a> <a class=pure-menu-subheading  href="/tutorials/getting_started/">Getting started</a> <ul class=pure-menu-list > <li class="pure-menu-item pure-menu-selected"><a href="/tutorials/example/" class=pure-menu-link >Composition</a> <li class="pure-menu-item "><a href="/contributing/" class=pure-menu-link >Contributing</a> </ul> </div> </div> <div id=main > <div class=header > <h1>EarthSciML Example</h1> <h2></h2> </div> <div class=franklin-content > <h1 id=example ><a href="#example" class=header-anchor >Example</a></h1> <div class=franklin-toc ><ol><li><a href="#figure_1">Figure 1</a><li><a href="#figure_2">Figure 2</a><li><a href="#figure_3">Figure 3</a><li><a href="#supplemental_code_to_skip_unit_enforcement">Supplemental code to skip unit enforcement</a><li><a href="#figure_4">Figure 4</a><li><a href="#supplemental_plotting_code">Supplemental plotting code</a></ol></div> <h2 id=figure_1 ><a href="#figure_1" class=header-anchor >Figure 1</a></h2> <pre><code class=language-julia >using EarthSciData, EarthSciMLBase, GasChem,
     DomainSets, ModelingToolkit, MethodOfLines, 
     DifferentialEquations, Dates, Distributions,
-    Latexify, Plots
+    Latexify, Plots, SciMLBase,
+    CairoMakie, GraphMakie, MetaGraphsNext
 
-<span class=hljs-meta >@parameters</span> t lev lon lat
-model = SuperFast(t)
-latexify(model.rxn_sys)</code></pre> <h2 id=figure_2 ><a href="#figure_2" class=header-anchor >Figure 2</a></h2> <pre><code class="julia hljs">start, finish = Dates.datetime2unix.([
-    Dates.DateTime(<span class=hljs-number >2022</span>, <span class=hljs-number >5</span>, <span class=hljs-number >1</span>),
-    Dates.DateTime(<span class=hljs-number >2022</span>, <span class=hljs-number >5</span>, <span class=hljs-number >3</span>),
-])
-model_ode = SuperFast(t) + FastJX(t)
-prob = ODEProblem(structural_simplify(get_mtk(model_ode)), [], (start, finish), [])
-sol = solve(prob, TRBDF2(), saveat=<span class=hljs-number >1800.0</span>)
-plot(sol, ylims=(<span class=hljs-number >0</span>,<span class=hljs-number >15</span>))</code></pre> <h2 id=supplemental_plotting_code ><a href="#supplemental_plotting_code" class=header-anchor >Supplemental plotting code</a></h2> <pre><code class="julia hljs">ticks = Dates.datetime2unix.([Dates.DateTime(<span class=hljs-number >2022</span>, <span class=hljs-number >5</span>, <span class=hljs-number >1</span>), Dates.DateTime(<span class=hljs-number >2022</span>, <span class=hljs-number >5</span>, <span class=hljs-number >2</span>), Dates.DateTime(<span class=hljs-number >2022</span>, <span class=hljs-number >5</span>, <span class=hljs-number >3</span>)])
-tickstrings = Dates.format.(Dates.unix2datetime.(ticks), <span class=hljs-string >&quot;m-d-yy&quot;</span>)
-plot(sol,ylims=(<span class=hljs-number >0</span>,<span class=hljs-number >15</span>),xlabel=<span class=hljs-string >&quot;Date&quot;</span>, ylabel=<span class=hljs-string >&quot;Concentration (ppb)&quot;</span>, ylabelfontsize=<span class=hljs-number >9</span>, xlabelfontsize=<span class=hljs-number >9</span>, 
-    xticks=(ticks, tickstrings), legend=:outertopright, size=(<span class=hljs-number >500</span>, <span class=hljs-number >310</span>))
-savefig(joinpath(<span class=hljs-meta >@__DIR__</span>, <span class=hljs-string >&quot;../latex/figures/ode.pdf&quot;</span>))</code></pre> <h2 id=figure_3 ><a href="#figure_3" class=header-anchor >Figure 3</a></h2> <pre><code class="julia hljs"><span class=hljs-keyword >struct</span> Emissions &lt;: EarthSciMLODESystem
+@parameters t lev lon lat
+model &#61; SuperFast&#40;t&#41;
+ls &#61; latexify&#40;model.rxn_sys&#41; # TODO: Change to model.rxn_sys</code></pre> <p>This is what <code>ls</code> looks like:</p> <div class=nonumber >\[\begin{aligned} \ce{ O3 + OH &->[$e^{\frac{T1}{T}} 2.46e10 k1$] HO2 + O2}\\ \ce{ HO2 + O3 &->[$e^{\frac{T2}{T}} 2.46e10 k2$] 2 O2 + OH}\\ \ce{ HO2 + OH &->[$e^{\frac{T3}{T}} 2.46e10 k3$] HO2 + O2}\\ \ce{ NO + O3 &->[$e^{\frac{T4}{T}} 2.46e10 k4$] NO2 + O2}\\ \ce{ HO2 + NO &->[$e^{\frac{T5}{T}} 2.46e10 k5$] NO2 + OH}\\ \ce{ CH4 + OH &->[$e^{\frac{T6}{T}} 2.46e10 k6$] CH3O2 + H2O}\\ \ce{ CH2O + OH &->[$e^{\frac{T7}{T}} 2.46e10 k7$] CO + H2O + HO2}\\ \ce{ CH3O2 + HO2 &->[$e^{\frac{T8}{T}} 2.46e10 k8$] CH3OOH + O2}\\ \ce{ CH3OOH + OH &->[$e^{\frac{T9}{T}} 2.46e10 k9$] CH3O2 + H2O}\\ \ce{ CH3OOH + OH &->[$e^{\frac{T10}{T}} 2.46e10 k10$] CH3O + H2O + OH}\\ \ce{ CH3O2 + NO &->[$e^{\frac{T11}{T}} 2.46e10 k11$] CH2O + HO2 + NO2}\\ \ce{ 10 CH3O2 + 10 CH3O2 &->[$e^{\frac{T12}{T}} 2.46e10 k12$] 20 CH2O + 8 H2O}\\ \ce{ DMS + OH &->[$e^{\frac{T13}{T}} 2.46e10 k13$] SO2}\\ \ce{ ISOP + OH &->[$e^{\frac{T14}{T}} 2.46e10 k14$] 2 CH3O2}\\ \ce{ 2 ISOP + 2 OH &->[$e^{\frac{T15}{T}} 2.46e10 k15$] 2 ISOP + OH}\\ \ce{ ISOP + O3 &->[$e^{\frac{T16}{T}} 2.46e10 k16$] 0.87 CH2O + 1.86 CH3O2 + 0.06 HO2 + 0.05 CO}\\ \ce{ O3 &->[$1.0000000000000001e-21 jO31D$] O1d + O2}\\ \ce{ O1d + H2O &->[$100 j2OH$] 2 OH}\\ \ce{ H2O2 &->[$jH2O2$] 2 OH}\\ \ce{ NO2 &->[$jNO2$] NO + O3}\\ \ce{ CH2O &->[$jCH2Oa$] CO + 2 HO2}\\ \ce{ CH3OOH &->[$jCH3OOH$] CH2O + HO2 + OH}\\ \ce{ 2 HO2 &->[$e^{\frac{T17}{T}} 2.46e10 k17$] H2O2 + O2}\\ \ce{ OH + H2O2 &->[$2.46e10 k18$] H2O + HO2}\\ \ce{ OH + CO &->[$2.46e10 k19$] HO2} \end{aligned}\]</div> <h2 id=figure_2 ><a href="#figure_2" class=header-anchor >Figure 2</a></h2> <pre><code class=language-julia ># Set start and end times.
+start, finish &#61; Dates.datetime2unix.&#40;&#91;
+    Dates.DateTime&#40;2022, 5, 1&#41;,
+    Dates.DateTime&#40;2022, 5, 3&#41;,
+&#93;&#41;
+
+# Create a model by combining SuperFast chemistry and FastJX photolysis.
+model_ode &#61; SuperFast&#40;t&#41; &#43; FastJX&#40;t&#41;
+
+# Run the simulation.
+prob &#61; ODEProblem&#40;structural_simplify&#40;get_mtk&#40;model_ode&#41;&#41;, &#91;&#93;, &#40;start, finish&#41;, &#91;&#93;&#41;
+sol &#61; solve&#40;prob, TRBDF2&#40;&#41;, saveat&#61;1800.0&#41;
+
+# Plot result.
+ticks &#61; Dates.datetime2unix.&#40;&#91;Dates.DateTime&#40;2022, 5, 1&#41;, Dates.DateTime&#40;2022, 5, 2&#41;, 
+    Dates.DateTime&#40;2022, 5, 3&#41;&#93;&#41;
+tickstrings &#61; Dates.format.&#40;Dates.unix2datetime.&#40;ticks&#41;, &quot;m-d-yy&quot;&#41;
+Plots.plot&#40;sol,ylims&#61;&#40;0,30&#41;,xlabel&#61;&quot;Date&quot;, ylabel&#61;&quot;Concentration &#40;ppb&#41;&quot;, 
+    ylabelfontsize&#61;9, xlabelfontsize&#61;9, 
+    xticks&#61;&#40;ticks, tickstrings&#41;, legend&#61;:outertopright, size&#61;&#40;500, 310&#41;&#41;</code></pre> <img src="/assets/tutorials/example/code/output/ode.svg" alt=""> <h2 id=figure_3 ><a href="#figure_3" class=header-anchor >Figure 3</a></h2> <pre><code class=language-julia >struct Emissions &lt;: EarthSciMLODESystem
     sys
-    <span class=hljs-keyword >function</span> Emissions(t, μ_lon, σ)
-        <span class=hljs-meta >@variables</span> NO(t) ISOP(t)
-        dist = MvNormal([start,μ_lon],[<span class=hljs-number >3600.0</span>,σ])
-        <span class=hljs-meta >@parameters</span> lon
-        D = Differential(t)
-        new(ODESystem([
-            D(NO) ~ pdf(dist, [t, lon]) * <span class=hljs-number >50</span>, 
-            D(ISOP) ~ pdf(dist, [t, lon]) * <span class=hljs-number >50</span>,
-        ], t, name=:emissions))
-    <span class=hljs-keyword >end</span>
-<span class=hljs-keyword >end</span>
-Base.:(+)(e::Emissions, b::SuperFast) = operator_compose(b, e)
-Base.:(+)(b::SuperFast, e::Emissions) = e + b</code></pre> <h2 id=supplemental_code_to_skip_unit_enforcement ><a href="#supplemental_code_to_skip_unit_enforcement" class=header-anchor >Supplemental code to skip unit enforcement</a></h2> <pre><code class="julia hljs"><span class=hljs-keyword >function</span> ModelingToolkit.check_units(eqs...) <span class=hljs-comment ># Skip unit enforcement for now</span>
-    ModelingToolkit.validate(eqs...) || <span class=hljs-meta >@info</span> <span class=hljs-string >&quot;Some equations had invalid units. See warnings for details.&quot;</span>
-<span class=hljs-keyword >end</span></code></pre> <h2 id=figure_4 ><a href="#figure_4" class=header-anchor >Figure 4</a></h2> <pre><code class="julia hljs">julia
-domain = DomainInfo(
+    function Emissions&#40;t, μ_lon, σ&#41;
+        @variables NO&#40;t&#41; ISOP&#40;t&#41;
+        dist &#61; MvNormal&#40;&#91;start,μ_lon&#93;,&#91;3600.0,σ&#93;&#41;
+        @parameters lon
+        D &#61; Differential&#40;t&#41;
+        new&#40;ODESystem&#40;&#91;
+            D&#40;NO&#41; ~ pdf&#40;dist, &#91;t, lon&#93;&#41; * 50, 
+            D&#40;ISOP&#41; ~ pdf&#40;dist, &#91;t, lon&#93;&#41; * 50,
+        &#93;, t, name&#61;:emissions&#41;&#41;
+    end
+end
+Base.:&#40;&#43;&#41;&#40;e::Emissions, b::SuperFast&#41; &#61; operator_compose&#40;b, e&#41;
+Base.:&#40;&#43;&#41;&#40;b::SuperFast, e::Emissions&#41; &#61; e &#43; b</code></pre> <h2 id=supplemental_code_to_skip_unit_enforcement ><a href="#supplemental_code_to_skip_unit_enforcement" class=header-anchor >Supplemental code to skip unit enforcement</a></h2> <pre><code class=language-julia >function ModelingToolkit.check_units&#40;eqs...&#41; # Skip unit enforcement for now
+    nothing
+    #ModelingToolkit.validate&#40;eqs...&#41; || @info &quot;Some equations had invalid units. See warnings for details.&quot;
+end
+
+# Skip returning the observed variables &#40;i.e. variables that are not state variables&#41;
+# because it is currently extremely slow to do so for this demo. 
+SciMLBase.observed&#40;sol::SciMLBase.AbstractTimeseriesSolution, sym, i::Colon&#41; &#61; zeros&#40;Float64, length&#40;sol.t&#41;&#41;</code></pre> <h2 id=figure_4 ><a href="#figure_4" class=header-anchor >Figure 4</a></h2> <pre><code class=language-julia >domain &#61; DomainInfo&#40;
     partialderivatives_lonlat2xymeters,
-    constIC(<span class=hljs-number >1.0f0</span>, t ∈ Interval(start, finish)),
-    zerogradBC(lon ∈ Interval(-<span class=hljs-number >130f0</span>, -<span class=hljs-number >100f0</span>)))
+    constIC&#40;1.0f0, t ∈ Interval&#40;start, finish&#41;&#41;,
+    zerogradBC&#40;lon ∈ Interval&#40;-130f0, -100f0&#41;&#41;&#41;
 
-geos = GEOSFP(<span class=hljs-string >&quot;0.25x0.3125_NA&quot;</span>, t; coord_defaults = <span class=hljs-built_in >Dict</span>(:lat =&gt; <span class=hljs-number >34.0</span>, :lev =&gt; <span class=hljs-number >1</span>))
+geos &#61; GEOSFP&#40;&quot;0.25x0.3125_NA&quot;, t; coord_defaults &#61; Dict&#40;:lat &#61;&gt; 34.0, :lev &#61;&gt; 1&#41;&#41;
 
-model = SuperFast(t) + FastJX(t) + domain +
-    Emissions(t, -<span class=hljs-number >118.2</span>, <span class=hljs-number >0.2</span>)+ Advection() + geos
+model &#61; SuperFast&#40;t&#41; &#43; FastJX&#40;t&#41; &#43; domain &#43;
+    Emissions&#40;t, -118.2, 0.2&#41;&#43; Advection&#40;&#41; &#43; geos
 
-discretization = MOLFiniteDifference([lon =&gt; <span class=hljs-number >50</span>], t, approx_order=<span class=hljs-number >2</span>)
-prob = discretize(get_mtk(model), discretization)
-sol = solve(prob, TRBDF2(), saveat=<span class=hljs-number >3600.0</span>)</code></pre> <h2 id=supplemental_plotting_code__2 ><a href="#supplemental_plotting_code__2" class=header-anchor >Supplemental plotting code</a></h2> <pre><code class="julia hljs">discrete_lon = sol[lon]
-discrete_t = sol[t]
+g &#61; graph&#40;model&#41;
 
-<span class=hljs-meta >@variables</span> superfast₊O3(..) superfast₊NO(..) superfast₊ISOP(..) superfast₊NO2(..)
-sol_isop = sol[superfast₊ISOP(t, lon)]
-sol_o3 = sol[superfast₊O3(t, lon)]
-sol_no = sol[superfast₊NO(t, lon)]
-sol_no2 = sol[superfast₊NO2(t, lon)]
+f, ax, p &#61; graphplot&#40;g; ilabels&#61;labels&#40;g&#41;&#41;
+hidedecorations&#33;&#40;ax&#41;; hidespines&#33;&#40;ax&#41;; ax.aspect &#61; DataAspect&#40;&#41;</code></pre> <p> <img src="/assets/tutorials/example/code/output/graph.svg" alt=""></p> <pre><code class=language-julia >discretization &#61; MOLFiniteDifference&#40;&#91;lon &#61;&gt; 50&#93;, t, approx_order&#61;2&#41;
+prob &#61; discretize&#40;get_mtk&#40;model&#41;, discretization&#41;
+sol &#61; solve&#40;prob, TRBDF2&#40;&#41;, saveat&#61;3600.0&#41;</code></pre> <h2 id=supplemental_plotting_code ><a href="#supplemental_plotting_code" class=header-anchor >Supplemental plotting code</a></h2> <pre><code class=language-julia >discrete_lon &#61; sol&#91;lon&#93;
+discrete_t &#61; sol&#91;t&#93;
 
-<span class=hljs-keyword >using</span> LaTeXStrings
-plot(
-    heatmap(discrete_t, discrete_lon[<span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>], sol_isop[:, <span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>]&#x27;, 
-        xticks=(ticks, tickstrings), 
-        ylabel=<span class=hljs-string >&quot;Longitude (°)&quot;</span>, title=<span class=hljs-string >&quot;Isoprene&quot;</span>, titlefontsize=<span class=hljs-number >12</span>,
-        margin=<span class=hljs-number >0</span>Plots.mm,
-        size=(<span class=hljs-number >600</span>, <span class=hljs-number >400</span>), dpi=<span class=hljs-number >300</span>),
-    heatmap(discrete_t, discrete_lon[<span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>], sol_no[:, <span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>]&#x27;, 
-        xticks=(ticks, tickstrings), title=<span class=hljs-string >&quot;NO&quot;</span>, titlefontsize=<span class=hljs-number >12</span>),
-    heatmap(discrete_t, discrete_lon[<span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>], sol_no2[:, <span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>]&#x27;, 
-        xticks=(ticks, tickstrings), xlabel=<span class=hljs-string >&quot;Date&quot;</span>, title=<span class=hljs-string >L&quot;\textrm{NO_2}&quot;</span>),
-    heatmap(discrete_t, discrete_lon[<span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>], sol_o3[:, <span class=hljs-number >1</span>:<span class=hljs-keyword >end</span>]&#x27;,colorbar_title=<span class=hljs-string >&quot;Concentration (ppb)&quot;</span>,
-        xticks=(ticks, tickstrings), title=<span class=hljs-string >L&quot;\textrm{O_3}&quot;</span>, titlefontsize=<span class=hljs-number >12</span>),
-)
-savefig(joinpath(<span class=hljs-meta >@__DIR__</span>, <span class=hljs-string >&quot;../latex/figures/pde.png&quot;</span>))</code></pre> <div class=page-foot > <a href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> EarthSciML Authors and Contributors. Last modified: May 05, 2023. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>. </div> </div> </div> </div> <script src="/libs/pure/ui.min.js"></script> <script src="/libs/highlight/highlight.min.js"></script> <script>hljs.highlightAll();hljs.configure({tabReplace: ' '});</script>
+@variables superfast₊O3&#40;..&#41; superfast₊NO&#40;..&#41; superfast₊ISOP&#40;..&#41; superfast₊NO2&#40;..&#41;
+sol_isop &#61; sol&#91;superfast₊ISOP&#40;t, lon&#41;&#93;
+sol_o3 &#61; sol&#91;superfast₊O3&#40;t, lon&#41;&#93;
+sol_no &#61; sol&#91;superfast₊NO&#40;t, lon&#41;&#93;
+sol_no2 &#61; sol&#91;superfast₊NO2&#40;t, lon&#41;&#93;
+
+using LaTeXStrings
+Plots.plot&#40;
+    Plots.heatmap&#40;discrete_t, discrete_lon&#91;1:end&#93;, sol_isop&#91;:, 1:end&#93;&#39;, 
+        xticks&#61;&#40;ticks, tickstrings&#41;, 
+        ylabel&#61;&quot;Longitude &#40;°&#41;&quot;, title&#61;&quot;Isoprene&quot;, titlefontsize&#61;12,
+        margin&#61;0Plots.mm,
+        size&#61;&#40;600, 400&#41;, dpi&#61;300&#41;,
+    Plots.heatmap&#40;discrete_t, discrete_lon&#91;1:end&#93;, sol_no&#91;:, 1:end&#93;&#39;, 
+        xticks&#61;&#40;ticks, tickstrings&#41;, title&#61;&quot;NO&quot;, titlefontsize&#61;12&#41;,
+    Plots.heatmap&#40;discrete_t, discrete_lon&#91;1:end&#93;, sol_no2&#91;:, 1:end&#93;&#39;, 
+        xticks&#61;&#40;ticks, tickstrings&#41;, xlabel&#61;&quot;Date&quot;, title&#61;L&quot;\textrm&#123;NO_2&#125;&quot;&#41;,
+    Plots.heatmap&#40;discrete_t, discrete_lon&#91;1:end&#93;, sol_o3&#91;:, 1:end&#93;&#39;,colorbar_title&#61;&quot;Concentration &#40;ppb&#41;&quot;,
+        xticks&#61;&#40;ticks, tickstrings&#41;, title&#61;L&quot;\textrm&#123;O_3&#125;&quot;, titlefontsize&#61;12&#41;,
+&#41;
+Plots.savefig&#40;joinpath&#40;@OUTPUT, &quot;pde.svg&quot;&#41;&#41;</code></pre> <img src="/assets/tutorials/example/code/output/pde.svg" alt=""> <div class=page-foot > <a href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> EarthSciML Authors and Contributors. Last modified: July 19, 2023. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>. </div> </div> </div> </div> <script src="/libs/pure/ui.min.js"></script> <script src="/libs/katex/katex.min.js"></script> <script src="/libs/katex/contrib/mhchem.min.js"></script> <script src="/libs/katex/contrib/auto-render.min.js"></script> <script>renderMathInElement(document.body)</script> <script src="/libs/highlight/highlight.min.js"></script> <script>hljs.highlightAll();hljs.configure({tabReplace: ' '});</script>

@@ -1,0 +1,28 @@
+\begin{align*}
+
+\ce{ O3 + OH &->[$e^{\frac{T1}{T}} 2.46e10 k1$] HO2 + O2}\\
+\ce{ HO2 + O3 &->[$e^{\frac{T2}{T}} 2.46e10 k2$] 2 O2 + OH}\\
+\ce{ HO2 + OH &->[$e^{\frac{T3}{T}} 2.46e10 k3$] HO2 + O2}\\
+\ce{ NO + O3 &->[$e^{\frac{T4}{T}} 2.46e10 k4$] NO2 + O2}\\
+\ce{ HO2 + NO &->[$e^{\frac{T5}{T}} 2.46e10 k5$] NO2 + OH}\\
+\ce{ CH4 + OH &->[$e^{\frac{T6}{T}} 2.46e10 k6$] CH3O2 + H2O}\\
+\ce{ CH2O + OH &->[$e^{\frac{T7}{T}} 2.46e10 k7$] CO + H2O + HO2}\\
+\ce{ CH3O2 + HO2 &->[$e^{\frac{T8}{T}} 2.46e10 k8$] CH3OOH + O2}\\
+\ce{ CH3OOH + OH &->[$e^{\frac{T9}{T}} 2.46e10 k9$] CH3O2 + H2O}\\
+\ce{ CH3OOH + OH &->[$e^{\frac{T10}{T}} 2.46e10 k10$] CH3O + H2O + OH}\\
+\ce{ CH3O2 + NO &->[$e^{\frac{T11}{T}} 2.46e10 k11$] CH2O + HO2 + NO2}\\
+\ce{ 10 CH3O2 + 10 CH3O2 &->[$e^{\frac{T12}{T}} 2.46e10 k12$] 20 CH2O + 8 H2O}\\
+\ce{ DMS + OH &->[$e^{\frac{T13}{T}} 2.46e10 k13$] SO2}\\
+\ce{ ISOP + OH &->[$e^{\frac{T14}{T}} 2.46e10 k14$] 2 CH3O2}\\
+\ce{ 2 ISOP + 2 OH &->[$e^{\frac{T15}{T}} 2.46e10 k15$] 2 ISOP + OH}\\
+\ce{ ISOP + O3 &->[$e^{\frac{T16}{T}} 2.46e10 k16$] 0.87 CH2O + 1.86 CH3O2 + 0.06 HO2 + 0.05 CO}\\
+\ce{ O3 &->[$1.0000000000000001e-21 jO31D$] O1d + O2}\\
+\ce{ O1d + H2O &->[$100 j2OH$] 2 OH}\\
+\ce{ H2O2 &->[$jH2O2$] 2 OH}\\
+\ce{ NO2 &->[$jNO2$] NO + O3}\\
+\ce{ CH2O &->[$jCH2Oa$] CO + 2 HO2}\\
+\ce{ CH3OOH &->[$jCH3OOH$] CH2O + HO2 + OH}\\
+\ce{ 2 HO2 &->[$e^{\frac{T17}{T}} 2.46e10 k17$] H2O2 + O2}\\
+\ce{ OH + H2O2 &->[$2.46e10 k18$] H2O + HO2}\\
+\ce{ OH + CO &->[$2.46e10 k19$] HO2}
+\end{align*}

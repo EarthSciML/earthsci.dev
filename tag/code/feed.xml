@@ -23,6 +23,25 @@
 
 <item>
   <title>
+    <![CDATA[  EarthSciML Example  ]]>
+  </title>
+  <link> https://earthsci.dev/tutorials/example/index.html </link>
+  <guid> https://earthsci.dev/tutorials/example/index.html </guid>
+  <description>
+    <![CDATA[  EarthSciML Example  ]]>
+  </description>  
+    
+  <pubDate>Sat, 01 Jul 2023 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>EarthSciML Authors and Contributors</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title>
     <![CDATA[  Getting Started with EarthSciML  ]]>
   </title>
   <link> https://earthsci.dev/tutorials/getting_started/index.html </link>
@@ -48,25 +67,6 @@
   <guid> https://earthsci.dev/contributing/index.html </guid>
   <description>
     <![CDATA[  How to contribute  ]]>
-  </description>  
-    
-  <pubDate>Fri, 05 May 2023 00:00:00 +0000</pubDate>  
-  
-  
-  <atom:author>
-    <atom:name>EarthSciML Authors and Contributors</atom:name>
-  </atom:author>
-        
-</item>
-
-<item>
-  <title>
-    <![CDATA[  EarthSciML Example  ]]>
-  </title>
-  <link> https://earthsci.dev/tutorials/example/index.html </link>
-  <guid> https://earthsci.dev/tutorials/example/index.html </guid>
-  <description>
-    <![CDATA[  EarthSciML Example  ]]>
   </description>  
     
   <pubDate>Fri, 05 May 2023 00:00:00 +0000</pubDate>  
