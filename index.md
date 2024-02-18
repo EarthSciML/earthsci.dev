@@ -21,5 +21,6 @@ This project aims to solve these two problems by seeding a transition to symboli
 
 * [EarthSciMLBase.jl](https://base.earthsci.dev)
 * [EarthSciData.jl](https://data.earthsci.dev)
-* [GasChem.jl](https://gaschem.earthsci.dev)
 * [Aerosol.jl](https://aerosol.earthsci.dev)
+* [AtmosphericDeposition.jl](https://deposition.earthsci.dev)
+* [GasChem.jl](https://gaschem.earthsci.dev)
