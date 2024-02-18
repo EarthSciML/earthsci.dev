@@ -1,0 +1,6 @@
+MethodError: no method matching discretize(::ModelingToolkit.ODESystem, ::MethodOfLines.MOLFiniteDifference{MethodOfLines.CenterAlignedGrid, MethodOfLines.ScalarizedDiscretization})
+
+Closest candidates are:
+  discretize(!Matched::ModelingToolkit.PDESystem, ::PDEBase.AbstractEquationSystemDiscretization; analytic, kwargs...)
+   @ PDEBase ~/.julia/packages/PDEBase/Aqj4G/src/discretization_state.jl:55
+

@@ -1,1 +1,1 @@
-"/home/runner/work/earthsci.dev/earthsci.dev/__site/assets/tutorials/example/code/output/pde.svg"
+nothing
