@@ -33,4 +33,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          JULIA_NO_VERIFY_HOSTS: 'gaftp.epa.gov'
         run: julia --project --color=yes make.jl
