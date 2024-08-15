@@ -17,6 +17,15 @@ makedocs(;
 #            "1D Simulation" => "example.md",
             "3D Simulation" => "quickstart/3d_sim.md",
         ],
+        "Libraries" => [
+            "Overview" => "libraries/overview.md",
+            "🔗 EarthSciMLBase.jl" => "libraries/base.md",
+            "🔗 GasChem.jl" => "libraries/gaschem.md",
+            "🔗 Aerosol.jl" => "libraries/aersol.md",
+            "🔗 AtmosphericDeposition.jl" => "libraries/deposition.md",
+            "🔗 EnvironmentalTransport.jl" => "libraries/transport.md",
+            "🔗 EarthSciData.jl" => "libraries/data.md",
+        ],
         "Contributing" => "contributing.md",
     ],
 )
