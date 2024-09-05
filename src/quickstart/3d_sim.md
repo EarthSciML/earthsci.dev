@@ -57,7 +57,7 @@ function pbar(start, finish)
         save_positions = (false, false),
     )
 end
-csys = couple(csys, pbar(starttime, endtime))
+#csys = couple(csys, pbar(starttime, endtime))
 
 
 sim = Simulator(csys, [deg2rad(2), deg2rad(2), 1])
