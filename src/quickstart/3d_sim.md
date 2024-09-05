@@ -57,6 +57,7 @@ function pbar(start, finish)
         save_positions = (false, false),
     )
 end
+# Uncomment this line to see a progress bar.
 #csys = couple(csys, pbar(starttime, endtime))
 
 
