@@ -57,8 +57,8 @@ function pbar(start, finish)
         save_positions = (false, false),
     )
 end
-# Uncomment this line to see a progress bar.
-#csys = couple(csys, pbar(starttime, endtime))
+# Set up a progress bar for the simulation, only if not running on GitHub Actions.
+csys = "RUNNER_TEMP" ∈ keys(ENV) ? csys : couple(csys, pbar(starttime, endtime))
 
 
 sim = Simulator(csys, [deg2rad(2), deg2rad(2), 1])
