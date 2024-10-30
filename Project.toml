@@ -19,4 +19,5 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 
 [compat]
+EarthSciMLBase = "0.19"
 GasChem = "0.7.1"
