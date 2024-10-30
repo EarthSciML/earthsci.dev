@@ -1,71 +1,39 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>3D Simulation · EarthSciML</title><meta name="title" content="3D Simulation · EarthSciML"/><meta property="og:title" content="3D Simulation · EarthSciML"/><meta property="twitter:title" content="3D Simulation · EarthSciML"/><meta name="description" content="Documentation for EarthSciML."/><meta property="og:description" content="Documentation for EarthSciML."/><meta property="twitter:description" content="Documentation for EarthSciML."/><meta property="og:url" content="earthsci.dev/quickstart/3d_sim/"/><meta property="twitter:url" content="earthsci.dev/quickstart/3d_sim/"/><link rel="canonical" href="earthsci.dev/quickstart/3d_sim/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">EarthSciML</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Quick Start</span><ul><li><a class="tocitem" href="../getting_started/">Installation</a></li><li class="is-active"><a class="tocitem" href>3D Simulation</a></li></ul></li><li><span class="tocitem">Libraries</span><ul><li><a class="tocitem" href="../../libraries/overview/">Overview</a></li><li><a class="tocitem" href="../../libraries/base/">🔗 EarthSciMLBase.jl</a></li><li><a class="tocitem" href="../../libraries/gaschem/">🔗 GasChem.jl</a></li><li><a class="tocitem" href="../../libraries/aerosol/">🔗 Aerosol.jl</a></li><li><a class="tocitem" href="../../libraries/deposition/">🔗 AtmosphericDeposition.jl</a></li><li><a class="tocitem" href="../../libraries/transport/">🔗 EnvironmentalTransport.jl</a></li><li><a class="tocitem" href="../../libraries/data/">🔗 EarthSciData.jl</a></li></ul></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Quick Start</a></li><li class="is-active"><a href>3D Simulation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>3D Simulation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/EarthSciML/earthsci.dev" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/EarthSciML/earthsci.dev/blob/main/src/quickstart/3d_sim.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="3D-Simulation"><a class="docs-heading-anchor" href="#3D-Simulation">3D Simulation</a><a id="3D-Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#3D-Simulation" title="Permalink"></a></h1><pre><code class="language-julia hljs">using EarthSciMLBase, EarthSciData, GasChem, EnvironmentalTransport
 using ModelingToolkit, DifferentialEquations
-using ModelingToolkit: t
-using DomainSets, DynamicQuantities, Dates
+using Dates
 using NCDatasets, Plots
-using SciMLBase: DiscreteCallback
-using ProgressMeter
-
-@parameters lon = deg2rad(-97) [unit=u&quot;rad&quot;]
-@parameters lat = deg2rad(40) [unit=u&quot;rad&quot;]
-@parameters lev = 1
-emis = NEI2016MonthlyEmis(&quot;mrggrid_withbeis_withrwc&quot;, lon, lat, lev; dtype=Float64)
-
-geosfp, geosfp_updater = GEOSFP(&quot;0.5x0.625_NA&quot;; dtype = Float64,
-    coord_defaults = Dict(:lon =&gt; deg2rad(-97), :lat =&gt; deg2rad(40), :lev =&gt; 1.0))
-
-starttime = datetime2unix(DateTime(2016, 5, 1, 0, 0))
-endtime = datetime2unix(DateTime(2016, 5, 5, 0, 0))
+using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
 
 domain = DomainInfo(
-    [partialderivatives_δxyδlonlat,
-        partialderivatives_δPδlev_geosfp(geosfp)],
-    constIC(16.0, t ∈ Interval(starttime, endtime)),
-    constBC(16.0,
-        lon ∈ Interval(deg2rad(-115), deg2rad(-68.75)),
-        lat ∈ Interval(deg2rad(25), deg2rad(53.7)),
-        lev ∈ Interval(1, 15)),
+    DateTime(2016, 5, 1),
+    DateTime(2016, 5, 1, 2);
+    lonrange = deg2rad(-115):deg2rad(5):deg2rad(-68.75),
+    latrange = deg2rad(25):deg2rad(4):deg2rad(53.7),
+    levrange = 1:15,
     dtype = Float64)
+
+emis = NEI2016MonthlyEmis(&quot;mrggrid_withbeis_withrwc&quot;, domain)
+
+geosfp = GEOSFP(&quot;0.5x0.625_NA&quot;, domain)
+
+domain = EarthSciMLBase.add_partial_derivative_func(domain, partialderivatives_δPδlev_geosfp(geosfp))
 
 chem = SuperFast()
 photolysis = FastJX()
 
+dt = 60.0 # Splitting timestep
+adv = AdvectionOperator(dt, upwind1_stencil, ZeroGradBC())
+
 outfile = (&quot;RUNNER_TEMP&quot; ∈ keys(ENV) ? ENV[&quot;RUNNER_TEMP&quot;] : tempname()) * &quot;out.nc&quot; # This is just a location to save the output.
 output = NetCDFOutputter(outfile, 3600.0)
 
-# This simulation doesn&#39;t work unless we get rid of this coupling.
-function EarthSciMLBase.couple2(c::GasChem.SuperFastCoupler, g::EarthSciData.GEOSFPCoupler)
-    c, g = c.sys, g.sys
-    ConnectorSystem([], c, g)
-end
+csys = couple(chem, photolysis, geosfp, adv, domain, output) # emis,
 
-
-csys = couple(chem, photolysis, geosfp, geosfp_updater, emis, domain, output)
-
-adv = AdvectionOperator(100.0, upwind1_stencil, ZeroGradBC())
-
-csys = couple(csys, adv)
-
-function pbar(start, finish)
-    p = Progress(Int(round(finish-start)))
-    DiscreteCallback(
-        (_, _, _) -&gt; true,
-        (integrator) -&gt; update!(p, Int(round(integrator.t-start)));
-        save_positions = (false, false),
-    )
-end
-# Set up a progress bar for the simulation, only if not running on GitHub Actions.
-csys = &quot;RUNNER_TEMP&quot; ∈ keys(ENV) ? csys : couple(csys, pbar(starttime, endtime))
-
-
-sim = Simulator(csys, [deg2rad(2), deg2rad(2), 1])
-st = SimulatorStrangThreads(Rosenbrock23(), SSPRK22(), 300.0)
-
-u0 = init_u(sim);
-u0 .+= rand(size(u0)) * 1e-6
-@time run!(sim, st, u0, save_on=false, save_start=false, save_end=false,
-    initialize_save=false)
+st = SolverStrangSerial(Rosenbrock23(), dt)
+prob = ODEProblem(csys, st)
+sol = solve(prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
+    save_on=false, save_start=false, save_end=false, initialize_save=false, abstol=1e-8, reltol=1e-8)
 
 ds = NCDataset(outfile, &quot;r&quot;)
 
@@ -75,4 +43,4 @@ anim = @animate for i ∈ 1:size(ds[&quot;SuperFast₊O3&quot;])[4]
         heatmap(ds[&quot;SuperFast₊O3&quot;][:, 2, :, i]&#39;, title=&quot;Vertical Cross-Section&quot;),
     )
 end
-gif(anim, fps = 15)</code></pre><img src="bad8b7ec.gif" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../getting_started/">« Installation</a><a class="docs-footer-nextpage" href="../../libraries/overview/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 2 October 2024 19:24">Wednesday 2 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+gif(anim, fps = 15)</code></pre><img src="5f983b24.gif" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../getting_started/">« Installation</a><a class="docs-footer-nextpage" href="../../libraries/overview/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 30 October 2024 18:07">Wednesday 30 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
