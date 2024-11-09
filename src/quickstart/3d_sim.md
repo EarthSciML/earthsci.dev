@@ -2,7 +2,8 @@
 
 ```@example 3d_sim
 using EarthSciMLBase, EarthSciData, GasChem, EnvironmentalTransport
-using ModelingToolkit, DifferentialEquations
+using ModelingToolkit
+using OrdinaryDiffEq
 using Dates
 using NCDatasets, Plots
 using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
