@@ -20,4 +20,5 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 [compat]
 EnvironmentalTransport = "0.5"
 ModelingToolkit = "=9.49.0"
+OrdinaryDiffEq = "6"
 ProgressLogging = "0.1"
