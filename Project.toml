@@ -18,6 +18,8 @@ ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 
 [compat]
-EnvironmentalTransport = "0.5"
-ModelingToolkit = "=9.49.0"
+EarthSciData = "0.12"
+EarthSciMLBase = "0.20.3"
+EnvironmentalTransport = "0.5.1"
+GasChem = "0.7.7"
 ProgressLogging = "0.1"

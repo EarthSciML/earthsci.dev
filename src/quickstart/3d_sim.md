@@ -17,8 +17,10 @@ domain = DomainInfo(
     dtype = Float64)
 
 emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain)
+emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
 
 geosfp = GEOSFP("0.5x0.625_NA", domain)
+geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
 
 domain = EarthSciMLBase.add_partial_derivative_func(domain, partialderivatives_δPδlev_geosfp(geosfp))
 
@@ -34,18 +36,6 @@ output = NetCDFOutputter(outfile, 3600.0)
 csys = couple(chem, photolysis, geosfp,  domain, emis, adv, output)
 
 st = SolverStrangSerial(Rosenbrock23(), dt)
-
-# Bug fix. Can be removed when https://github.com/JuliaSymbolics/Symbolics.jl/issues/1351 is resolved.
-function Symbolics.is_singleton(e)
-    if Symbolics.iscall(e)
-        op = Symbolics.operation(e)
-        op === getindex && return true
-        Symbolics.iscall(op) && return Symbolics.is_singleton(op)
-        return Symbolics.issym(op) && length(Symbolics.arguments(e)) == 1
-    else
-        return Symbolics.issym(e)
-    end
-end
 
 prob = ODEProblem(csys, st)
 @time sol = solve(prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
