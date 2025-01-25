@@ -4,8 +4,6 @@ EarthSciML is a next-generation software framework for geoscientific modeling an
 It allows geoscientific models to be specified as systems of equations which can be coupled together and compiled to a runnable model.
 In addition to simplifying the process of creating and using geoscientific models, EarthSciML also (will soon) enable the use of GPU-accelerated simulations as well as automatic creation of advanced analysis tools such as model adjoints.
 
-## Examples
-
 ### Simulation
 
 A main goal of EarthSciML is to allow users to easily set up and explore dynamics of geoscientific models.
@@ -77,10 +75,10 @@ gif(anim, fps = 5)
 
 ## Where to Start
 
-* If you'd like to know more about the available capabilities, check out our [`Examples`](@ref) section.
-* If you're interested in jumping right in and using the framework on your own computer, check out the [`Getting Started`](@ref) section.
-* If you're interested in learning about the theory behind geoscientific modeling and machine learning, check out [`EarthSci EDU`](@ref).
-* Finally, if you're interested in contributing to the project, check [`Contributing`](@ref).
+* If you'd like to know more about the available capabilities, check out our [Examples](@ref) section.
+* If you're interested in jumping right in and using the framework on your own computer, check out the [Getting Started](@ref) section.
+* If you're interested in learning about the theory behind geoscientific modeling and machine learning, check out [EarthSci EDU](@ref).
+* Finally, if you're interested in contributing to the project, check [Contributing](@ref).
 
 
 ## Reproducibility
