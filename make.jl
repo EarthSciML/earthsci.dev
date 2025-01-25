@@ -19,7 +19,7 @@ makedocs(;
             "Using EarthSciML" => "quickstart/using_earthsciml.md",
         ],
         "Examples" => [
-
+            "Overview" => "examples/overview.md",
         ],
         "Libraries" => [
             "Overview" => "libraries/overview.md",
