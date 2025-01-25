@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Using ModelingToolkit · EarthSciML</title><meta name="title" content="Using ModelingToolkit · EarthSciML"/><meta property="og:title" content="Using ModelingToolkit · EarthSciML"/><meta property="twitter:title" content="Using ModelingToolkit · EarthSciML"/><meta name="description" content="Documentation for EarthSciML."/><meta property="og:description" content="Documentation for EarthSciML."/><meta property="twitter:description" content="Documentation for EarthSciML."/><meta property="og:url" content="earthsci.dev/quickstart/using_mtk/"/><meta property="twitter:url" content="earthsci.dev/quickstart/using_mtk/"/><link rel="canonical" href="earthsci.dev/quickstart/using_mtk/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="EarthSciML logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">EarthSciML</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../getting_started/">Overview</a></li><li><a class="tocitem" href="../prepare_environment/">Preparing Your Environment</a></li><li class="is-active"><a class="tocitem" href>Using ModelingToolkit</a><ul class="internal"><li><a class="tocitem" href="#Variables,-Parameters,-and-Constants"><span>Variables, Parameters, and Constants</span></a></li><li><a class="tocitem" href="#Equation-Systems"><span>Equation Systems</span></a></li><li><a class="tocitem" href="#Running-an-ODE-Simulation"><span>Running an ODE Simulation</span></a></li><li><a class="tocitem" href="#Plotting-the-Results"><span>Plotting the Results</span></a></li><li><a class="tocitem" href="#Partial-Differential-Equations"><span>Partial Differential Equations</span></a></li><li><a class="tocitem" href="#Isn&#39;t-There-an-Easier-Way?"><span>Isn&#39;t There an Easier Way?</span></a></li></ul></li><li><a class="tocitem" href="../using_earthsciml/">Using EarthSciML</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples/overview/">Overview</a></li></ul></li><li><span class="tocitem">Libraries</span><ul><li><a class="tocitem" href="../../libraries/overview/">Overview</a></li><li><a class="tocitem" href="../../libraries/base/">🔗 EarthSciMLBase.jl</a></li><li><a class="tocitem" href="../../libraries/gaschem/">🔗 GasChem.jl</a></li><li><a class="tocitem" href="../../libraries/aerosol/">🔗 Aerosol.jl</a></li><li><a class="tocitem" href="../../libraries/deposition/">🔗 AtmosphericDeposition.jl</a></li><li><a class="tocitem" href="../../libraries/transport/">🔗 EnvironmentalTransport.jl</a></li><li><a class="tocitem" href="../../libraries/data/">🔗 EarthSciData.jl</a></li></ul></li><li><span class="tocitem">EarthSci EDU</span><ul><li><a class="tocitem" href="../../edu/overview/">Overview</a></li><li><a class="tocitem" href="../../edu/atmos_chem/">Atmospheric Chemistry</a></li></ul></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Getting Started</a></li><li class="is-active"><a href>Using ModelingToolkit</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Using ModelingToolkit</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/EarthSciML/earthsci.dev" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/EarthSciML/earthsci.dev/blob/main/src/quickstart/using_mtk.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Using-ModelingToolkit"><a class="docs-heading-anchor" href="#Using-ModelingToolkit">Using ModelingToolkit</a><a id="Using-ModelingToolkit-1"></a><a class="docs-heading-anchor-permalink" href="#Using-ModelingToolkit" title="Permalink"></a></h1><p><a href="https://mtk.sciml.ai/">ModelingToolkit</a> is a Julia library that provides a high-level interface for defining and manipulating mathematical models. It is the foundation of EarthSciML, and is used to define the physical and chemical processes that are used in EarthSciML models. Refer to the <a href="https://mtk.sciml.ai/stable/">documentation</a> for comprehensive information, but we&#39;ll go through a quick tutorial here.</p><p>The first step is to load the library (see <a href="../prepare_environment/#Installing-Software-Packages">Installing Software Packages</a> for details):</p><pre><code class="language-julia hljs">using ModelingToolkit</code></pre><p>We&#39;ll also be working with units here, which will help us check our work and avoid unit conversion errors.  This requires the <code>DynamicQuantities</code> package:</p><pre><code class="language-julia hljs">using DynamicQuantities</code></pre><p>Finally, we will load a two specific variables from the ModelingToolkit library to make our code more concise, specifically <code>t</code> which is time in units of seconds, and <code>D</code> which is the differential operator with respect to <code>t</code>.</p><pre><code class="language-julia hljs">using ModelingToolkit: t, D</code></pre><h2 id="Variables,-Parameters,-and-Constants"><a class="docs-heading-anchor" href="#Variables,-Parameters,-and-Constants">Variables, Parameters, and Constants</a><a id="Variables,-Parameters,-and-Constants-1"></a><a class="docs-heading-anchor-permalink" href="#Variables,-Parameters,-and-Constants" title="Permalink"></a></h2><p>Using ModelingToolkit, we create models by defining systems of differential or algebraic equations, which in turn are functions of <em>variables</em>, <em>parameters</em>, and <em>constants</em>. We demonstrate how this works by modeling a chemical reaction.</p><h3 id="Variables"><a class="docs-heading-anchor" href="#Variables">Variables</a><a id="Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Variables" title="Permalink"></a></h3><p>In ModelingToolkit, variables are entities that are affected by the dynamics of the system. Our reaction will have two variables <code>A</code> and <code>B</code>, which represent the concentrations of two chemical species. We define them like this:</p><pre><code class="language-julia hljs">@variables A(t) = 1 [unit=u&quot;kg/m^3&quot;, description=&quot;Concentration of A&quot;]
+@variables B(t) = 0 [unit=u&quot;kg/m^3&quot;, description=&quot;Concentration of B&quot;]</code></pre><p>There&#39;s a lot going on there, let&#39;s unpack it.  <code>@variables</code> is something in Julia called a <a href="https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros">macro</a>. Feel free to go to the link to see what a macro is, but for our purposes we just need to know that it specifies that we are defining a variable. The next part, <code>A(t)</code> or <code>B(t)</code>, species the variable name and that the variable is a function of time <code>t</code>. After that, the <code>= 1</code> or <code>= 0</code> specifies the default initial value of the variable, which we can override later if we want. Finally, <code>[unit=u&quot;kg/m^3&quot;, description=&quot;Concentration of A&quot;]</code> specifies the units of the variable and a description of what the variable represents.</p><h3 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h3><p>In ModelingToolkit, parameters are entities that are fixed for the duration of the simulation, but can be changed between simulations. Our model will have one parameter <code>T</code>, which represents the temperature of the system:</p><pre><code class="language-julia hljs">@parameters T = 293.15 [unit=u&quot;K&quot;, description=&quot;Temperature&quot;]</code></pre><p><code>@parameters</code> works the same as <code>@variables</code>, but it specifies that we are defining a parameter instead of a variable. <code>= 300</code> </p><h3 id="Constants"><a class="docs-heading-anchor" href="#Constants">Constants</a><a id="Constants-1"></a><a class="docs-heading-anchor-permalink" href="#Constants" title="Permalink"></a></h3><p>Finally, constants in ModelingToolkit are values that are not expected to ever change. Our model will have contants T_0, which is a reference temperature, and <code>k</code>, which is a rate constant for the reaction:</p><pre><code class="language-julia hljs">@constants k = 0.1 [unit=u&quot;1/s&quot;, description=&quot;Rate constant&quot;]
+@constants T_0 = 300 [unit=u&quot;K&quot;, description=&quot;Initial temperature&quot;]</code></pre><p>Now we&#39;re ready to define the equations that govern the dynamics of our system.</p><h2 id="Equation-Systems"><a class="docs-heading-anchor" href="#Equation-Systems">Equation Systems</a><a id="Equation-Systems-1"></a><a class="docs-heading-anchor-permalink" href="#Equation-Systems" title="Permalink"></a></h2><p>The equations that govern the dynamics of our system can be defined as a system of ordinary differential equations (ODEs). We can define them like this:</p><pre><code class="language-julia hljs">eqs = [
+    D(A) ~ -k * exp(T/T_0) * A,
+    D(B) ~ k * exp(T/T_0) * A
+]</code></pre><p class="math-container">\[ \begin{align}
+\frac{\mathrm{d} A\left( t \right)}{\mathrm{d}t} &amp;=  - k e^{\frac{T}{\mathtt{T\_0}}} A\left( t \right) \\
+\frac{\mathrm{d} B\left( t \right)}{\mathrm{d}t} &amp;= k e^{\frac{T}{\mathtt{T\_0}}} A\left( t \right)
+\end{align}
+ \]</p><p>Here, <code>eqs</code> is the variable we&#39;re creating to store our equations, the <code>[...]</code> square brackets enclose the list of equations we&#39;re creating (which are separated by a comma), <code>D(A)</code> and <code>D(B)</code> represent the derivatives of the variables <code>A</code> and <code>B</code> with respect to time, and <code>~</code> is where we would use <code>=</code> in a normal equation (because <code>=</code> already means something else in Julia). Overall, we have specified that <code>A</code> decreases and <code>B</code> increases at the rate of <code>k * exp(T/T0) * A</code>, which is just a standard first-order chemical reaction.</p><h2 id="Running-an-ODE-Simulation"><a class="docs-heading-anchor" href="#Running-an-ODE-Simulation">Running an ODE Simulation</a><a id="Running-an-ODE-Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Running-an-ODE-Simulation" title="Permalink"></a></h2><p>Now that we have defined our system of equations, we can run a simulation. First, we set up an <a href="https://docs.sciml.ai/ModelingToolkit/stable/systems/ODESystem/"><code>ODESystem</code></a>, which is a ModelingToolkit object that represents a system of ODEs.</p><pre><code class="language-julia hljs">@named sys = ODESystem(eqs, t, [A, B], [T])</code></pre><p class="math-container">\[ \begin{align}
+\frac{\mathrm{d} A\left( t \right)}{\mathrm{d}t} &amp;=  - k e^{\frac{T}{\mathtt{T\_0}}} A\left( t \right) \\
+\frac{\mathrm{d} B\left( t \right)}{\mathrm{d}t} &amp;= k e^{\frac{T}{\mathtt{T\_0}}} A\left( t \right)
+\end{align}
+ \]</p><p>Again, there&#39;s several parts here, but starting from the left: <code>@named sys</code> is saying the both the name of the model and the name of the variable we&#39;re assigning it to is <code>sys</code>. Then, <code>ODESystem(eqs, t, [A, B], [T])</code> is creating a new <code>ODESystem</code> object, where <code>eqs</code> is the list of equations we defined earlier, <code>t</code> is the time variable, <code>[A, B]</code> is the list of variables, and <code>[T]</code> is the list of parameters.</p><p>Now, almost we&#39;re ready to run our simulation.  First we need the <a href="https://diffeq.sciml.ai/stable/"><code>OrdinaryDiffEq</code></a> package, which provides the differential equation solvers we need to solve our ODE system.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq</code></pre><p>Now, we do just a few more things: first, we run the <a href="https://docs.sciml.ai/ModelingToolkit/dev/basics/Composition/#Structural-Simplify"><code>structural_simplify</code></a> function on our system, which checks if there are any manipulations that can be made to our equation system to make it easier to solve (there aren&#39;t any in this case). Then, we create an <a href="https://docs.sciml.ai/ModelingToolkit/dev/systems/ODESystem/#SciMLBase.ODEProblem-Tuple{ModelingToolkit.AbstractODESystem,%20Vararg{Any}}"><code>ODEProblem</code></a> from our ODESystem. <code>ODEProblem</code>s are structures are can directly be solved. Then, we finally can call the <a href="https://diffeq.sciml.ai/stable/basics/common_solver_opts/#Solving-the-Problem"><code>solve</code></a> function to get the result of our simulation, which we save in the <code>sol</code> variable. When we call the <code>solve</code> function, we include the <code>tspan=(0,10)</code> argument, which specifies that we want to run the simulation with the start time of 0 seconds and the end time of 10 seconds.</p><pre><code class="language-julia hljs">sys_simplified = structural_simplify(sys)
+prob = ODEProblem(sys_simplified)
+sol = solve(prob, Tsit5(), tspan=(0,10))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: specialized 4th order &quot;free&quot; interpolation
+t: 11-element Vector{Float64}:
+  0.0
+  0.0037599980056636038
+  0.041359978062299636
+  0.3002900441528432
+  0.8995602073366732
+  1.789270609980218
+  2.916031651707029
+  4.33906636555827
+  6.012970830538941
+  7.9351238797831005
+ 10.0
+u: 11-element Vector{Vector{Float64}}:
+ [1.0, 0.0]
+ [0.9990014983343757, 0.0009985016656243028]
+ [0.98907115305296, 0.010928846947039945]
+ [0.9233152150458389, 0.07668478495416102]
+ [0.7874103655028479, 0.21258963449715199]
+ [0.6216398069442175, 0.3783601930557824]
+ [0.4608118411769797, 0.5391881588230202]
+ [0.31573450727111557, 0.6842654927288844]
+ [0.2023827277232912, 0.7976172722767088]
+ [0.12144536114004299, 0.878554638859957]
+ [0.07016507860239268, 0.9298349213976073]</code></pre><p>The result of the simulation is shown above. Note that it starts with <code>retcode: Success</code> which means that the simulation was successful. If <code>retcode</code> is something else, the solution make include some results, but they will not be correct.</p><h2 id="Plotting-the-Results"><a class="docs-heading-anchor" href="#Plotting-the-Results">Plotting the Results</a><a id="Plotting-the-Results-1"></a><a class="docs-heading-anchor-permalink" href="#Plotting-the-Results" title="Permalink"></a></h2><p>There are many software packages in Julia that can be used to make plots. Here, we&#39;re going to use one called <a href="https://docs.juliaplots.org/stable/">Plots.jl</a>:</p><pre><code class="language-julia hljs">using Plots
+
+plot(sol, xlabel=&quot;time (s)&quot;, ylabel=&quot;Concentration (kg/m³)&quot;)</code></pre><img src="8c312179.svg" alt="Example block output"/><p>The plot above shows that <code>A</code> starts out at a concentration of 1 and decreases over time, while <code>B</code> starts out at a concentration of 0 and increases over time at the same rate.</p><p>We can also re-run the simulation with different values of the parameters or different initial values for the variables, and compare the result. For example, in the code below, we increase the initial concentration of <code>A</code> to 1.5 and decrease the temperature to 100 K:</p><pre><code class="language-julia hljs">prob2 = ODEProblem(sys_simplified, [A=&gt;1.5], (0, 10), [T=&gt;100])
+sol2 = solve(prob2, Tsit5())
+
+plot(
+    plot(sol, xlabel=&quot;time (s)&quot;, ylabel=&quot;Concentration (kg/m³)&quot;,
+        ylim=(0, 1.5), title=&quot;T=293.15&quot;),
+    plot(sol2, title=&quot;T=100&quot;, xlabel=&quot;&quot;, ylabel=&quot;&quot;, legend=:none),
+    size=(1000, 400)
+)</code></pre><img src="44d79a76.svg" alt="Example block output"/><h2 id="Partial-Differential-Equations"><a class="docs-heading-anchor" href="#Partial-Differential-Equations">Partial Differential Equations</a><a id="Partial-Differential-Equations-1"></a><a class="docs-heading-anchor-permalink" href="#Partial-Differential-Equations" title="Permalink"></a></h2><p>We can also simulate partial differential equations (PDEs) using ModelingToolkit. For example, we can consider the same reaction system as above, but occuring in a fluid that is moving. To do this, let&#39;s first define the boundaries of our spatial system, where we have x ∈ {0, 1}, y ∈ {0, 1}, and t ∈ {0, 10} as before.</p><pre><code class="language-julia hljs">x_min = y_min = t_min = 0.0
+x_max = y_max = 1.0
+t_max = 10.0</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10.0</code></pre><p>Let&#39;s split up our domain into 32 grid cells in each direction:</p><pre><code class="language-julia hljs">N = 32</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">32</code></pre><p>and calculate the size of each grid cell:</p><pre><code class="language-julia hljs">dx = (x_max-x_min)/N
+dy = (y_max-y_min)/N</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.03125</code></pre><p>We can now create a function which injects emissions into the domain at a specific location:</p><pre><code class="language-julia hljs">islocation(x, y) = x &gt; x_max / 2 - dx &amp;&amp; x &lt; x_max / 2 + dx &amp;&amp;
+    y &gt; y_max / 10 - dx &amp;&amp;
+    y &lt; y_max / 10 + dx
+emission(x, y) = ifelse(islocation(x, y), 10, 0)
+@register_symbolic emission(x, y)</code></pre><p>(Because our <code>emission</code> function includes operations which are not allowed in ModelingToolkit, we have to register it as a symbolic function. See <a href="https://docs.sciml.ai/ModelingToolkit/dev/basics/FAQ/#ERROR:-TypeError:-non-boolean-(Num)-used-in-boolean-context?">here</a> for more information.)</p><p>We&#39;ll also add function to specify the movement of the fluid in the domain, which we will specify as traveling in a circle:</p><pre><code class="language-julia hljs">θ(x,y) = atan(y.-0.5, x.-0.5)
+u(x,y) = -sin(θ(x,y))
+v(x,y) = cos(θ(x,y))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">v (generic function with 1 method)</code></pre><p>Now we can re-create our equation system from above, but this time we will add terms to account for the advection of chemicals <code>A</code> and <code>B</code> in the host fluid. Because units and partial differential equations don&#39;t currently work together in ModelingToolkit, we will also recreate our variables, parameters, and constants without units.</p><pre><code class="language-julia hljs">@parameters T=293.15 x y
+t_ = ModelingToolkit.t_nounits # We want the time variable without units now.
+D_ = ModelingToolkit.D_nounits # We want the differential operator without units now.
+@constants k=0.1 T_0=300.0
+@variables A(..) B(..)
+Dx = Differential(x)
+Dy = Differential(y)
+advect(var) = -u(x,y)*Dx(var) - v(x,y)*Dy(var)
+eqs = [
+    D_(A(x,y,t_)) ~ advect(A(x, y, t_)) + emission(x, y) - k*exp(T/T_0)*A(x,y,t_),
+    D_(B(x,y,t_)) ~ advect(B(x, y, t_)) + k*exp(T/T_0)*A(x,y,t_),
+]</code></pre><p class="math-container">\[ \begin{align}
+\frac{\mathrm{d}}{\mathrm{d}t} A\left( x, y, t \right) &amp;= emission\left( x, y \right) + \frac{\mathrm{d}}{\mathrm{d}x} A\left( x, y, t \right) \sin\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) - \cos\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) \frac{\mathrm{d}}{\mathrm{d}y} A\left( x, y, t \right) - k A\left( x, y, t \right) e^{\frac{T}{\mathtt{T\_0}}} \\
+\frac{\mathrm{d}}{\mathrm{d}t} B\left( x, y, t \right) &amp;= \sin\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) \frac{\mathrm{d}}{\mathrm{d}x} B\left( x, y, t \right) - \frac{\mathrm{d}}{\mathrm{d}y} B\left( x, y, t \right) \cos\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) + k A\left( x, y, t \right) e^{\frac{T}{\mathtt{T\_0}}}
+\end{align}
+ \]</p><p>As you can see, we need to define the variables and equations slightly differently for PDEs. (See <a href="https://docs.sciml.ai/MethodOfLines/stable/">here</a> for more information.)</p><p>Next, we need to more formally specify our spatial and temporal domain, which requires the <code>DomainSets</code> package:</p><pre><code class="language-julia hljs">using DomainSets
+domain = [
+    x ∈ Interval(x_min, x_max),
+    y ∈ Interval(y_min, y_max),
+    t ∈ Interval(t_min, t_max),
+]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Symbolics.VarDomainPairing}:
+ Symbolics.VarDomainPairing(x, 0.0 .. 1.0)
+ Symbolics.VarDomainPairing(y, 0.0 .. 1.0)
+ Symbolics.VarDomainPairing(t, 0.0 .. 10.0)</code></pre><p>We also need to specify our boundary conditions:</p><pre><code class="language-julia hljs">bcs = [A(x,y,t_min) ~ 0.0,
+       A(x_min,y,t_) ~ A(x_max,y,t_),
+       A(x,y_min,t_) ~ A(x,y_max,t_),
+
+       B(x,y,t_min) ~ 0.0,
+       B(x_min,y,t_) ~ B(x_max,y,t_),
+       B(x,y_min,t_) ~ B(x,y_max,t_),
+]</code></pre><p class="math-container">\[ \begin{align}
+A\left( x, y, 0 \right) &amp;= 0 \\
+A\left( 0, y, t \right) &amp;= A\left( 1, y, t \right) \\
+A\left( x, 0, t \right) &amp;= A\left( x, 1, t \right) \\
+B\left( x, y, 0 \right) &amp;= 0 \\
+B\left( 0, y, t \right) &amp;= B\left( 1, y, t \right) \\
+B\left( x, 0, t \right) &amp;= B\left( x, 1, t \right)
+\end{align}
+ \]</p><p>Now we can create our <code>PDESystem</code>, which is similar to an <code>ODESystem</code> but for PDEs.</p><pre><code class="language-julia hljs">@named pdesys = PDESystem(eqs, bcs, domain, [x,y,t], [A(x,y,t), B(x,y,t)], [T])</code></pre><p class="math-container">\[ \begin{align}
+\frac{\mathrm{d}}{\mathrm{d}t} A\left( x, y, t \right) &amp;= emission\left( x, y \right) + \frac{\mathrm{d}}{\mathrm{d}x} A\left( x, y, t \right) \sin\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) - \cos\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) \frac{\mathrm{d}}{\mathrm{d}y} A\left( x, y, t \right) - k A\left( x, y, t \right) e^{\frac{T}{\mathtt{T\_0}}} \\
+\frac{\mathrm{d}}{\mathrm{d}t} B\left( x, y, t \right) &amp;= \sin\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) \frac{\mathrm{d}}{\mathrm{d}x} B\left( x, y, t \right) - \frac{\mathrm{d}}{\mathrm{d}y} B\left( x, y, t \right) \cos\left( \arctan\left( -0.5 + y, -0.5 + x \right) \right) + k A\left( x, y, t \right) e^{\frac{T}{\mathtt{T\_0}}}
+\end{align}
+ \]</p><p>One additional difference with PDE systems is that we need to <a href="https://docs.sciml.ai/MethodOfLines/stable/api/discretization/">discretize</a> them to convert them to an ODE system that we can solve.  To do this, we need to use the <a href="https://docs.sciml.ai/MethodOfLines/stable/">MethodOfLines</a> package:</p><pre><code class="language-julia hljs">using MethodOfLines
+discretization = MOLFiniteDifference([x=&gt;dx, y=&gt;dy], t)
+prob = discretize(pdesys,discretization)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr38_2" style="color:#56b6c2">ODEProblem</span> with uType <span class="sgr38_2" style="color:#56b6c2">Vector{Float64}</span> and tType <span class="sgr38_2" style="color:#56b6c2">Float64</span>. In-place: <span class="sgr38_2" style="color:#56b6c2">true</span>
+timespan: (0.0, 10.0)
+u0: 2048-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ ⋮
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0</code></pre><p>Then, we can finally run our simulation. This time, we specify a different ODE solver called <a href="https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/#SDIRK-Methods"><code>TRBDF2</code></a>. We also specify that we want to save the results at every 0.1 seconds:</p><pre><code class="language-julia hljs">sol = solve(prob, TRBDF2(), saveat=0.1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: Dict{Symbolics.Num, Interpolations.GriddedInterpolation{Float64, 3, Array{Float64, 3}, Interpolations.Gridded{Interpolations.Linear{Interpolations.Throw{Interpolations.OnGrid}}}, Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}}
+t: 101-element Vector{Float64}:
+  0.0
+  0.1
+  0.2
+  0.3
+  0.4
+  0.5
+  0.6
+  0.7
+  0.8
+  0.9
+  ⋮
+  9.2
+  9.3
+  9.4
+  9.5
+  9.6
+  9.7
+  9.8
+  9.9
+ 10.0ivs: 3-element Vector{SymbolicUtils.BasicSymbolic{Real}}:
+ t
+ x
+ ydomain:([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9  …  9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 10.0], 0.0:0.03125:1.0, 0.0:0.03125:1.0)
+u: Dict{Symbolics.Num, Array{Float64, 3}} with 2 entries:
+  A(x, y, t) =&gt; [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0…
+  B(x, y, t) =&gt; [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0…</code></pre><p>Finally, we can plot the results of our simulation:</p><pre><code class="language-julia hljs">disc_t = sol[t]
+disc_x = sol[x]
+disc_y = sol[y]
+solA = sol[A(x, y, t)]
+solB = sol[B(x, y, t)]
+
+anim = @animate for i in eachindex(disc_t)
+    plot(
+        heatmap(disc_x, disc_y, solA[:,:,i], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, title=&quot;A Concentration&quot;,
+            clim=(0, maximum(solA))),
+        heatmap(disc_x, disc_y, solB[:,:,i], title=&quot;B Concentration&quot;,
+            clim=(0, maximum(solB))),
+        size=(1000, 400)
+    )
+end
+gif(anim, fps=8)</code></pre><img src="df1e2044.gif" alt="Example block output"/><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>This method for simulating PDEs currently doesn&#39;t work for large-scale simulations. EarthSciML currently uses a different method for representing spatial operators, which we will harmonize with the method shown here in the future.</p></div></div><h2 id="Isn&#39;t-There-an-Easier-Way?"><a class="docs-heading-anchor" href="#Isn&#39;t-There-an-Easier-Way?">Isn&#39;t There an Easier Way?</a><a id="Isn&#39;t-There-an-Easier-Way?-1"></a><a class="docs-heading-anchor-permalink" href="#Isn&#39;t-There-an-Easier-Way?" title="Permalink"></a></h2><p>As you can see, we can use ModelingToolkit to define and simulate complex systems of equations. However, you can probably also see that as the system we&#39;re modeling gets more complex, it gets more complex to keep track of things and make sure everything is specified correctly. That&#39;s where EarthSciML comes in.</p><p>EarthSciML is a collection of Julia packages that are designed to simplify and automate the process of specifying geoscientific models using ModelingToolkit. Read on to see how it works!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../prepare_environment/">« Preparing Your Environment</a><a class="docs-footer-nextpage" href="../using_earthsciml/">Using EarthSciML »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Saturday 25 January 2025 21:19">Saturday 25 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
