@@ -12,10 +12,14 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Quick Start" => [
-            "Installation" => "quickstart/getting_started.md",
-#            "1D Simulation" => "example.md",
-            "3D Simulation" => "quickstart/3d_sim.md",
+        "Getting Started" => [
+            "Overview" => "quickstart/getting_started.md",
+            "Preparing Your Environment" => "quickstart/prepare_environment.md",
+            "Using ModelingToolkit" => "quickstart/using_mtk.md",
+            "Using EarthSciML" => "quickstart/using_earthsciml.md",
+        ],
+        "Examples" => [
+
         ],
         "Libraries" => [
             "Overview" => "libraries/overview.md",
@@ -25,6 +29,10 @@ makedocs(;
             "🔗 AtmosphericDeposition.jl" => "libraries/deposition.md",
             "🔗 EnvironmentalTransport.jl" => "libraries/transport.md",
             "🔗 EarthSciData.jl" => "libraries/data.md",
+        ],
+        "EarthSci EDU" => [
+            "Overview" => "edu/overview.md",
+            "Atmospheric Chemistry" => "edu/atmos_chem.md",
         ],
         "Contributing" => "contributing.md",
     ],

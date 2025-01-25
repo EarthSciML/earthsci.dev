@@ -1,13 +1,3 @@
-# Getting started
+# Getting Started
 
-First, install the package:
-
-```julia
-] add EarthSciMLBase
-```
-
-Then, load it:
-
-```julia-repl
-> using EarthSciMLBase
-```
+This section contains a information describing the basics of how EarthSciML works and how to get started using it on your own computer.
