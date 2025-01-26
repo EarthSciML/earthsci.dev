@@ -7,7 +7,7 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="earthsci.dev",
-        assets=String[],
+        assets = ["assets/favicon.ico"],
         repolink="https://github.com/EarthSciML/earthsci.dev",
     ),
     pages=[
