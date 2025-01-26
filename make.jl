@@ -21,6 +21,7 @@ makedocs(;
         "Examples" => [
             "Overview" => "examples/overview.md",
             "Scenario Analysis" => "examples/scenario_analysis.md",
+            "Optimization" => "examples/optimization.md",
         ],
         "Libraries" => [
             "Overview" => "libraries/overview.md",
