@@ -15,7 +15,7 @@ To start, we will define an air quality model similar to the one described in [U
 ```@example optimization
 using EarthSciMLBase, GasChem, AtmosphericDeposition, EarthSciData
 using EnvironmentalTransport, ModelingToolkit, OrdinaryDiffEq
-using ForwardDiff, FiniteDiff, LinearSolve
+using FiniteDiff
 using SymbolicIndexingInterface
 using ModelingToolkit: t
 using Dates, Plots, NCDatasets, Statistics, DynamicQuantities
