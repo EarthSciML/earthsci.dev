@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Optimization · EarthSciML</title><meta name="title" content="Optimization · EarthSciML"/><meta property="og:title" content="Optimization · EarthSciML"/><meta property="twitter:title" content="Optimization · EarthSciML"/><meta name="description" content="Documentation for EarthSciML."/><meta property="og:description" content="Documentation for EarthSciML."/><meta property="twitter:description" content="Documentation for EarthSciML."/><meta property="og:url" content="earthsci.dev/examples/optimization/"/><meta property="twitter:url" content="earthsci.dev/examples/optimization/"/><link rel="canonical" href="earthsci.dev/examples/optimization/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="EarthSciML logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">EarthSciML</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../../quickstart/getting_started/">Overview</a></li><li><a class="tocitem" href="../../quickstart/prepare_environment/">Preparing Your Environment</a></li><li><a class="tocitem" href="../../quickstart/using_mtk/">Using ModelingToolkit</a></li><li><a class="tocitem" href="../../quickstart/using_earthsciml/">Using EarthSciML</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../overview/">Overview</a></li><li><a class="tocitem" href="../scenario_analysis/">Scenario Analysis</a></li><li class="is-active"><a class="tocitem" href>Optimization</a><ul class="internal"><li><a class="tocitem" href="#Gradient-Calculation"><span>Gradient Calculation</span></a></li></ul></li></ul></li><li><span class="tocitem">Libraries</span><ul><li><a class="tocitem" href="../../libraries/overview/">Overview</a></li><li><a class="tocitem" href="../../libraries/base/">🔗 EarthSciMLBase.jl</a></li><li><a class="tocitem" href="../../libraries/gaschem/">🔗 GasChem.jl</a></li><li><a class="tocitem" href="../../libraries/aerosol/">🔗 Aerosol.jl</a></li><li><a class="tocitem" href="../../libraries/deposition/">🔗 AtmosphericDeposition.jl</a></li><li><a class="tocitem" href="../../libraries/transport/">🔗 EnvironmentalTransport.jl</a></li><li><a class="tocitem" href="../../libraries/data/">🔗 EarthSciData.jl</a></li></ul></li><li><span class="tocitem">EarthSci EDU</span><ul><li><a class="tocitem" href="../../edu/overview/">Overview</a></li><li><a class="tocitem" href="../../edu/atmos_chem/">Atmospheric Chemistry</a></li></ul></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Optimization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Optimization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/EarthSciML/earthsci.dev" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/EarthSciML/earthsci.dev/blob/main/src/examples/optimization.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Analysis-and-Optimization"><a class="docs-heading-anchor" href="#Analysis-and-Optimization">Analysis and Optimization</a><a id="Analysis-and-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis-and-Optimization" title="Permalink"></a></h1><p>There are many types of analysis and optimization that one may want to perform using a geoscientific model, for example calculating the relationship between an input and an output, or finding the value of an input or parameter that is consistent with a measured observation. A main goal of EarthSciML is to streamline and support these types of analysis.</p><h2 id="Gradient-Calculation"><a class="docs-heading-anchor" href="#Gradient-Calculation">Gradient Calculation</a><a id="Gradient-Calculation-1"></a><a class="docs-heading-anchor-permalink" href="#Gradient-Calculation" title="Permalink"></a></h2><p>Many types of analysis and optimization require knowledge of the relationship between one or more of a model&#39;s outputs and one or more of its inputs or parameters. In other words, we often want to know if we change a model input or parameter, how will the model output change, or what change in the inputs or parameters is necessary to result in a desired change in the output. These types of relationships are referred to in mathematics as <a href="https://en.wikipedia.org/wiki/Derivative">derivatives</a>, <a href="https://en.wikipedia.org/wiki/Gradient">gradients</a>, or <a href="https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant">Jacobians</a>, depending on the number of inputs and outputs involved. In this example, we are going to calculate the gradient of an model&#39;s average output air pollution concentration over time with respect to parameters in the model, which will tell us how we should change those parameters to change the model output in a certain way.</p><p>To start, we will define an air quality model similar to the one described in <a href="../../quickstart/using_earthsciml/#Using-EarthSciML">Using EarthSciML</a>:</p><pre><code class="language-julia hljs">using EarthSciMLBase, GasChem, AtmosphericDeposition, EarthSciData
+using EnvironmentalTransport, ModelingToolkit, OrdinaryDiffEq
+using FiniteDiff
+using SymbolicIndexingInterface
+using ModelingToolkit: t
+using Dates, Plots, NCDatasets, Statistics, DynamicQuantities
+using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
+
+domain = DomainInfo(
+    DateTime(2016, 5, 1),
+    DateTime(2016, 5, 1, 1);
+    lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
+    latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
+    levrange = 1:15,
+    dtype = Float64)
+
+geosfp = GEOSFP(&quot;0.5x0.625_NA&quot;, domain; stream=false)
+geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
+
+emis = NEI2016MonthlyEmis(&quot;mrggrid_withbeis_withrwc&quot;, domain; stream=false)
+emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
+
+dt = 300.0 # Operator splitting timestep
+
+model_base = couple(
+    SuperFast(),
+    # FastJX(), Not currently working with autodifferentiation
+    #DrydepositionG(), Not currently working
+    Wetdeposition(),
+    AdvectionOperator(dt, upwind1_stencil, ZeroGradBC()),
+    emis,
+    geosfp,
+    domain
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">CoupledSystem containing 4 system(s), 1 operator(s), and 0 callback(s).</code></pre><p>In this example, we want to understand how we can &quot;nudge&quot; or adjust each of the variables in the model while it is running to achieve a desired output. So the first thing that we need to do is to create a new model component that includes the nudging factors. It gets slightly complicated, but what we want to do is to add a new term to each differential equation in our system that adjusts the rate of change of the variable in question by the current value of that variable times a &quot;nudge factor&quot;. For more information about the specifics of what we&#39;re doing here, you can refer to the documentation about <a href="https://base.earthsci.dev/dev/composition/">creating and composing model components</a> for more information.</p><pre><code class="language-julia hljs">struct NudgeCoupler
+    sys
+end
+function Nudge(; name=:nudge)
+    vars = []
+    params = []
+    for i in 1:13
+        n = Symbol(:nudge_, i)
+        push!(vars, only(@variables $n(t) = 0.0 [unit = u&quot;s^-1&quot;, description = &quot;Nudge for species $i&quot;]))
+        cn = Symbol(:nudge_c, i)
+        push!(params, only(@parameters $(cn) = 0.0 [unit = u&quot;s^-1&quot;, description = &quot;Nudge constant for species $i&quot;]))
+    end
+    eqs = vars .~ params
+    ODESystem(eqs, t, [vars...], [params...]; name=name, metadata=Dict(:coupletype =&gt; NudgeCoupler))
+end
+
+function EarthSciMLBase.couple2(c::GasChem.SuperFastCoupler, n::NudgeCoupler)
+    c, n = c.sys, n.sys
+    operator_compose(c, n, Dict(
+        c.O3 =&gt; n.nudge_1 =&gt; c.O3,
+        c.OH =&gt; n.nudge_2 =&gt; c.OH,
+        c.HO2 =&gt; n.nudge_3 =&gt; c.HO2,
+        c.H2O =&gt; n.nudge_4 =&gt; c.H2O,
+        c.NO =&gt; n.nudge_5 =&gt; c.NO,
+        c.NO2 =&gt; n.nudge_6 =&gt; c.NO2,
+        c.CH3O2 =&gt; n.nudge_7 =&gt; c.CH3O2,
+        c.CH2O =&gt; n.nudge_8 =&gt; c.CH2O,
+        c.CO =&gt; n.nudge_9 =&gt; c.CO,
+        c.CH3OOH =&gt; n.nudge_10 =&gt; c.CH3OOH,
+        c.ISOP =&gt; n.nudge_11 =&gt; c.ISOP,
+        c.H2O2 =&gt; n.nudge_12 =&gt; c.H2O2,
+        c.HNO3 =&gt; n.nudge_13 =&gt; c.HNO3,
+    ))
+end
+
+model = couple(model_base, Nudge())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">CoupledSystem containing 5 system(s), 1 operator(s), and 0 callback(s).</code></pre><p>Once we&#39;ve created our nudging model component and coupled it into our base model, we&#39;re almost ready to calculate our gradient. Before we do that, though, we need to get a few preliminaries out of the way, including extracting the nudging parameters from our model so that we can use them later and figuring out the location in the model results where the NO2 concentration is going to be stored, as that is the output that we&#39;re interested in adjusting.</p><pre><code class="language-julia hljs">model_sys = convert(ODESystem, model)
+nudge_params = parameters(model_sys)[[only(findall((x)-&gt;x==Symbol(:nudge₊nudge_c, i), Symbol.(parameters(model_sys)))) for i in 1:13]]
+
+usize = size(EarthSciMLBase.init_u(model_sys, domain))
+iNO2 = only(findall((x) -&gt; x==Symbol(&quot;SuperFast₊NO2(t)&quot;), Symbol.(unknowns(model_sys))))
+
+st = SolverStrangSerial(Rosenbrock23(), dt)
+prob = ODEProblem(model, st)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr38_2" style="color:#56b6c2">ODEProblem</span> with uType <span class="sgr38_2" style="color:#56b6c2">Vector{Float64}</span> and tType <span class="sgr38_2" style="color:#56b6c2">Float64</span>. In-place: <span class="sgr38_2" style="color:#56b6c2">true</span>
+timespan: (1.4620608e9, 1.4620644e9)
+u0: 59850-element Vector{Float64}:
+  20.0
+   0.01
+   0.01
+ 450.0
+  10.0
+  10.0
+   0.01
+   0.15
+ 275.0
+   1.6
+   ⋮
+  10.0
+   0.01
+   0.15
+ 275.0
+   1.6
+   0.15
+   2.34
+  10.0
+   2.0</code></pre><p>The last thing that we need to set up is an objective function: what do we want to calculate the gradient with respect to? In this case, let&#39;s say that we know that our model should always output an NO2 concentration of 42 ppb, so we&#39;re interested in finding nudging factors that minimize the difference between the model&#39;s predicted NO2 concentration and 42 ppb at all times.</p><p>To operationalize this goal, we create a function that we&#39;ll call <code>loss</code> that takes a vector of nudging factors as input, runs the model with those nudging factors, and calculates the mean squared difference between the model&#39;s predicted NO2 concentration and 42 ppb.</p><pre><code class="language-julia hljs">function loss(nudge_vals)
+    the_answer = 42.0
+    new_params = remake_buffer(model_sys, prob.p, Dict(nudge_params .=&gt; nudge_vals))
+    #newprob = remake(prob, p=new_params)#, u0=eltype(nudge_vals).(prob.u0))
+    newprob = ODEProblem(model, st, p=new_params)
+    sol = solve(newprob, SSPRK22(); dt=dt, progress=true, progress_steps=1, saveat=600)
+    mean([mean((reshape(ui, usize...)[iNO2] .- the_answer).^2) for ui in sol.u])
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">loss (generic function with 1 method)</code></pre><p>Since there are 13 chemical species in our model, we have 13 nudging factors, so we can run the <code>loss</code> function with a vector of 13 zeros to see what the loss is with no nudging factors applied.</p><pre><code class="language-julia hljs">loss(zeros(13))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1555.667140512044</code></pre><p>We can also see how our loss value changes if we nudge the derivatives of all the model variables down by 10%:</p><pre><code class="language-julia hljs">loss(zeros(13) .- 0.1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1734.3999999999858</code></pre><p>As you can see, the loss is higher in this new simulation, which means that our change made things worse! So what values of the nudging factors should we use to make the loss as small as possible?</p><p>The first step to get that answer is to calculate the gradient of the loss function with respect to the nudging factors, so we know which direction to change each nudging factor to make the loss smaller.</p><p>Ideally, we would use automatic differentiation to calculate the gradient, but that&#39;s not working at the moment, we will use finite differences to calculate the gradient instead:</p><pre><code class="language-julia hljs"># ForwardDiff.gradient(loss, zeros(13))
+grad = FiniteDiff.finite_difference_gradient(loss, zeros(13))
+
+join([&quot;$(v) = $(round(grad[i], sigdigits=2))&quot; for (i, v) in enumerate(
+    [&quot;O3&quot;, &quot;OH&quot;, &quot;HO2&quot;, &quot;H2O&quot;, &quot;NO&quot;, &quot;NO2&quot;, &quot;CH3O2&quot;, &quot;CH2O&quot;, &quot;CO&quot;,
+    &quot;CH3OOH&quot;, &quot;ISOP&quot;, &quot;H2O2&quot;, &quot;HNO3&quot;])], &quot;\n&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;O3 = 51000.0\nOH = 95.0\nHO2 = 170.0\nH2O = -32.0\nNO = -120000.0\nNO2 = -94000.0\nCH3O2 = -530.0\nCH2O = -180.0\nCO = -33000.0\nCH3OOH = -330.0\nISOP = 6.6\nH2O2 = -42000.0\nHNO3 = 3.8&quot;</code></pre><p>Now that&#39;s a start! We can see that the error in NO2 concentrations is most sensitive to adjustments to CH3OOH dynamics and least sensitive to adjustments in HNO3. Perhaps counterintuitively, adjusting the dynamics of NO2 itself is <em>not</em> the most effective way to adjust the NO2 concentration in the model.</p><p>That&#39;s all we have for now, but we will add to this example as we build out the EarthSciML optimization and analysis capabilities. Check back soon!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../scenario_analysis/">« Scenario Analysis</a><a class="docs-footer-nextpage" href="../../libraries/overview/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 27 January 2025 02:59">Monday 27 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
