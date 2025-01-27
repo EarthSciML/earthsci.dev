@@ -23,6 +23,11 @@ makedocs(;
             "Scenario Analysis" => "examples/scenario_analysis.md",
             "Optimization" => "examples/optimization.md",
         ],
+        "EarthSci EDU" => [
+            "Overview" => "edu/overview.md",
+            "Atmospheric Chemistry" => "edu/atmos_chem.md",
+        ],
+        "Contributing" => "contributing.md",
         "Libraries" => [
             "Overview" => "libraries/overview.md",
             "🔗 EarthSciMLBase.jl" => "libraries/base.md",
@@ -32,11 +37,6 @@ makedocs(;
             "🔗 EnvironmentalTransport.jl" => "libraries/transport.md",
             "🔗 EarthSciData.jl" => "libraries/data.md",
         ],
-        "EarthSci EDU" => [
-            "Overview" => "edu/overview.md",
-            "Atmospheric Chemistry" => "edu/atmos_chem.md",
-        ],
-        "Contributing" => "contributing.md",
     ],
 )
 
