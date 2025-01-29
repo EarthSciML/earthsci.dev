@@ -63,11 +63,11 @@ using Dates
 
 domain = DomainInfo(
     DateTime(2016, 5, 1),
-    DateTime(2016, 5, 1, 6);
+    DateTime(2016, 5, 3);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
-    dtype = Float64)
+    dtype = Float32)
 
 emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream=false)
 emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
@@ -108,7 +108,7 @@ This can allow us study the dynamics or diagnose any programs without using a lo
 
 ```@example using_earthsciml
 model_sys = convert(ODESystem, model)
-sol = solve(ODEProblem(model_sys), Rosenbrock23(autodiff=false), tspan=BigFloat.(get_tspan(domain)))
+sol = solve(ODEProblem(model_sys), Rosenbrock23(), tspan=get_tspan(domain))
 
 plot(unix2datetime.(sol.t), sol[model_sys.SuperFast₊O3],
     ylabel="O₃ Concentration (ppb)", 
@@ -166,9 +166,9 @@ We then use our solver strategy as an argument to `ODEProblem`.
 We also specify some options in `solve` show a progress bar (because this simulation can take a while) and to prevent the output data from being saved in memory because we have already specified that we want to save it to disk instead.
 
 ```@example using_earthsciml
-st = SolverStrangSerial(Rosenbrock23(autodiff=false), dt)
+st = SolverStrangSerial(Rosenbrock23(), dt)
 
-prob = ODEProblem(model_3d, st; tspan=BigFloat.(get_tspan(domain)))
+prob = ODEProblem(model_3d, st)
 
 using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
 

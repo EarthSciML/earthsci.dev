@@ -27,7 +27,7 @@ domain = DomainInfo(
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
-    dtype = Float64)
+    dtype = Float32)
 
 geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
 geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
@@ -39,7 +39,7 @@ dt = 300.0 # Operator splitting timestep
 
 model_base = couple(
     SuperFast(),
-    # FastJX(), Not currently working with autodifferentiation
+    FastJX(),
     #DrydepositionG(), Not currently working
     Wetdeposition(),
     AdvectionOperator(dt, upwind1_stencil, ZeroGradBC()),
@@ -144,9 +144,8 @@ Ideally, we would use automatic differentiation to calculate the gradient, but t
 # ForwardDiff.gradient(loss, zeros(13))
 grad = FiniteDiff.finite_difference_gradient(loss, zeros(13))
 
-join(["$(v) = $(round(grad[i], sigdigits=2))" for (i, v) in enumerate(
-    ["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
-    "CH3OOH", "ISOP", "H2O2", "HNO3"])], "\n")
+bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
+    "CH3OOH", "ISOP", "H2O2", "HNO3"], grad)
 ```
 
 Now that's a start! We can see that the error in NO2 concentrations is most sensitive to adjustments to CH3OOH dynamics and least sensitive to adjustments in HNO3.

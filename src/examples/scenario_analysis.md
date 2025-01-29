@@ -12,11 +12,11 @@ using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a t
 
 domain = DomainInfo(
     DateTime(2016, 5, 1),
-    DateTime(2016, 5, 1, 6);
+    DateTime(2016, 5, 3);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
-    dtype = Float64)
+    dtype = Float32)
 
 geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
 geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
@@ -62,14 +62,14 @@ scenario_model = couple(base_model, scenario_emis, NetCDFOutputter(scenario_outf
 Once we've configured both of out models, we can run them both as described in [Using EarthSciML](@ref) above:
 
 ```@example scenario_analysis
-st = SolverStrangSerial(Rosenbrock23(autodiff=false), dt)
+st = SolverStrangSerial(Rosenbrock23(), dt)
 
-bau_prob = ODEProblem(bau_model, st; tspan=BigFloat.(get_tspan(domain)))
+bau_prob = ODEProblem(bau_model, st)
 sol = solve(bau_prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
     save_on=false, save_start=false, save_end=false, initialize_save=false)
 
 
-scenario_prob = ODEProblem(scenario_model, st; tspan=BigFloat.(get_tspan(domain)))
+scenario_prob = ODEProblem(scenario_model, st)
 sol = solve(scenario_prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
     save_on=false, save_start=false, save_end=false, initialize_save=false)
 nothing # hide
