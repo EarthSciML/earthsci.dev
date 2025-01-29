@@ -27,7 +27,7 @@ domain = DomainInfo(
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
-    dtype = Float32)
+    dtype = Float64)
 
 geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
 geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
@@ -145,11 +145,11 @@ Ideally, we would use automatic differentiation to calculate the gradient, but t
 grad = FiniteDiff.finite_difference_gradient(loss, zeros(13))
 
 bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
-    "CH3OOH", "ISOP", "H2O2", "HNO3"], grad)
+    "CH3OOH", "ISOP", "H2O2", "HNO3"], grad, permute=(:x, :y), size=(400, 250),
+    label=:none, xlabel="Species", ylabel="Nudging Sensitivity")
 ```
 
-Now that's a start! We can see that the error in NO2 concentrations is most sensitive to adjustments to CH3OOH dynamics and least sensitive to adjustments in HNO3.
-Perhaps counterintuitively, adjusting the dynamics of NO2 itself is *not* the most effective way to adjust the NO2 concentration in the model.
+Now that's a start! We can see that the error in NO2 concentrations is most sensitive to adjustments to NO2 dynamics (unsurprisingly), but also sensitive to adjustments in CH3O2, NO, and O3.
 
 That's all we have for now, but we will add to this example as we build out the EarthSciML optimization and analysis capabilities.
 Check back soon!

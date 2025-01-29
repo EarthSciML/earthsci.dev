@@ -67,7 +67,7 @@ domain = DomainInfo(
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
-    dtype = Float32)
+    dtype = Float64)
 
 emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream=false)
 emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.

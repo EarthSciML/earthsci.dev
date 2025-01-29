@@ -16,7 +16,7 @@ domain = DomainInfo(
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
-    dtype = Float32)
+    dtype = Float64)
 
 geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
 geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
