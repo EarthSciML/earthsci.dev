@@ -15,6 +15,7 @@ anim = @animate for T in 100:10:400
         ylabel=&quot;O₃ Concentration (ppb)&quot;, label=:none, title=&quot;T=$T K&quot;)
 end
 gif(anim, fps = 10)</code></pre><img src="index-e9d7571d.gif" alt="Example block output"/><h3 id="Analysis"><a class="docs-heading-anchor" href="#Analysis">Analysis</a><a id="Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis" title="Permalink"></a></h3><p>A second main goal of EarthSciML is to make it easy to perform advanced analysis of model dynamics, particularly the type of analysis that can streamline the integration of geoscientific modeling and machine learning. Below, we demonstrate this by using gradient descent with <a href="https://juliadiff.org/">automatic differentiation</a> to find a temperature that results in an average ozone concentration of 25 ppb.</p><pre><code class="language-julia hljs">using Optimization, OptimizationOptimJL
+using ForwardDiff
 using Statistics
 
 # Set up functions to run the simulation and calculate the error.
@@ -23,34 +24,27 @@ function run_simulation(u)
     p2 = remake_buffer(model, prob.p, Dict(model.SuperFast₊T =&gt; T, model.FastJX₊T =&gt; T))
     solve(remake(prob, p=p2), Rosenbrock23())
 end
-loss(u, p) = (mean(run_simulation(u)[model.SuperFast₊O3]) - 25)^2
+loss(u) = (mean(run_simulation(u)[model.SuperFast₊O3]) - 25)^2
 
-optfn = OptimizationFunction(loss, Optimization.AutoForwardDiff())
-optprob = OptimizationProblem(optfn, [320.0], ())
+T = [290.0] # Starting guess for the temperature.
+anim = @animate for i in 1:100
+    g = ForwardDiff.gradient(loss, T) # Calculate the gradient of error w.r.t T.
+    global T -= 5g # Update the temperature.
 
-# This is some code to save the results for making an animation.
-Ts = []
-sols = []
-function callback(state, loss_val)
-    push!(Ts, state.u[1])
-    push!(sols, run_simulation(state.u))
-    false
-end
-
-# This line actually does the optimization.
-sol = solve(optprob, BFGS(), callback=callback)
-
-# The rest of the code makes the animation.
-anim = @animate for i in eachindex(Ts)
-    o3avg = round(mean(sols[i][model.SuperFast₊O3]), digits=3)
-    plot(sols[i].t, sols[i][model.SuperFast₊O3], label=:none, ylim=(0, 35),
+    # Make a plot of the simulation.
+    sol = run_simulation(T)
+    o3avg = round(mean(sol[model.SuperFast₊O3]), digits=3)
+    plot(sol.t, sol[model.SuperFast₊O3], label=:none, ylim=(0, 35),
         xlabel=&quot;Time (s)&quot;, ylabel=&quot;O₃ Concentration (ppb)&quot;,
-        title=&quot;Step=$i; T=$(round(Ts[i], digits=3)) K; O₃ avg.=$(o3avg) ppb&quot;, )
-    plot!([sols[i].t[begin], sols[i].t[end]], [o3avg, o3avg], label=:none,
+        title=&quot;Step=$i; T=$(round(T[1], digits=3)) K; O₃ avg.=$(o3avg) ppb&quot;, )
+    plot!([sol.t[begin], sol.t[end]], [o3avg, o3avg], label=:none,
         linecolor=:black, linestyle=:dash)
 
+    if abs(g[1]) &lt; 1e-2
+        break
+    end
 end
-gif(anim, fps = 5)</code></pre><img src="index-b024cfd8.gif" alt="Example block output"/><h2 id="Where-to-Start"><a class="docs-heading-anchor" href="#Where-to-Start">Where to Start</a><a id="Where-to-Start-1"></a><a class="docs-heading-anchor-permalink" href="#Where-to-Start" title="Permalink"></a></h2><ul><li>If you&#39;d like to know more about the available capabilities, check out our <a href="examples/overview/#Examples">Examples</a> section.</li><li>If you&#39;re interested in jumping right in and using the framework on your own computer, check out the <a href="quickstart/getting_started/#Getting-Started">Getting Started</a> section.</li><li>If you&#39;re interested in learning about the theory behind geoscientific modeling and machine learning, check out <a href="edu/overview/#EarthSci-EDU">EarthSci EDU</a>.</li><li>Finally, if you&#39;re interested in contributing to the project, check <a href="contributing/#Contributing">Contributing</a>.</li></ul><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this EarthSciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr32"><span class="sgr1">Status</span></span> `~/work/earthsci.dev/earthsci.dev/Project.toml`
+gif(anim, fps = 5)</code></pre><img src="index-721e7b15.gif" alt="Example block output"/><h2 id="Where-to-Start"><a class="docs-heading-anchor" href="#Where-to-Start">Where to Start</a><a id="Where-to-Start-1"></a><a class="docs-heading-anchor-permalink" href="#Where-to-Start" title="Permalink"></a></h2><ul><li>If you&#39;d like to know more about the available capabilities, check out our <a href="examples/overview/#Examples">Examples</a> section.</li><li>If you&#39;re interested in jumping right in and using the framework on your own computer, check out the <a href="quickstart/getting_started/#Getting-Started">Getting Started</a> section.</li><li>If you&#39;re interested in learning about the theory behind geoscientific modeling and machine learning, check out <a href="edu/overview/#EarthSci-EDU">EarthSci EDU</a>.</li><li>Finally, if you&#39;re interested in contributing to the project, check <a href="contributing/#Contributing">Contributing</a>.</li></ul><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this EarthSciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr32"><span class="sgr1">Status</span></span> `~/work/earthsci.dev/earthsci.dev/Project.toml`
   <span class="sgr90">[1a52f20c] </span>AtmosphericDeposition v0.2.2
 <span class="sgr32">⌃</span> <span class="sgr90">[13f3f980] </span>CairoMakie v0.12.18
   <span class="sgr90">[e30172f5] </span>Documenter v1.8.0
@@ -60,6 +54,7 @@ gif(anim, fps = 5)</code></pre><img src="index-b024cfd8.gif" alt="Example block 
   <span class="sgr90">[e53f1632] </span>EarthSciMLBase v0.20.5
   <span class="sgr90">[9e73f4c4] </span>EnvironmentalTransport v0.5.1
   <span class="sgr90">[6a86dc24] </span>FiniteDiff v2.26.2
+  <span class="sgr90">[f6369f11] </span>ForwardDiff v0.10.38
   <span class="sgr90">[58070593] </span>GasChem v0.9.2
 <span class="sgr32">⌃</span> <span class="sgr90">[1ecd5474] </span>GraphMakie v0.5.12
   <span class="sgr90">[fa8bd995] </span>MetaGraphsNext v0.7.1
@@ -163,7 +158,7 @@ Environment:
   <span class="sgr90">[163ba53b] </span>DiffResults v1.1.0
   <span class="sgr90">[b552c78f] </span>DiffRules v1.15.1
   <span class="sgr90">[0c46a032] </span>DifferentialEquations v7.15.0
-  <span class="sgr90">[a0c0ee7d] </span>DifferentiationInterface v0.6.35
+  <span class="sgr90">[a0c0ee7d] </span>DifferentiationInterface v0.6.36
   <span class="sgr90">[3c3547ce] </span>DiskArrays v0.4.8
   <span class="sgr90">[8d63f2c5] </span>DispatchDoctor v0.4.19
   <span class="sgr90">[b4f34e82] </span>Distances v0.10.12
@@ -607,4 +602,4 @@ Environment:
   <span class="sgr90">[3f19e933] </span>p7zip_jll v17.4.0+2
 <span class="sgr36"><span class="sgr1">Info</span></span> Packages marked with <span class="sgr32">⌃</span> and <span class="sgr33">⌅</span> have new versions available. Those with <span class="sgr32">⌃</span> may be upgradable, but those with <span class="sgr33">⌅</span> are restricted by compatibility constraints from upgrading. To see why use `status --outdated -m`</code></pre></details>You can also download the 
 <a href="<p>https://github.com/EarthSciML/earthsci.dev/tree/gh-pages/v0.1.0/assets/Manifest.toml</p>">manifest</a> file and the
-<a href="<p>https://github.com/EarthSciML/earthsci.dev/tree/gh-pages/v0.1.0/assets/Project.toml</p>">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="quickstart/getting_started/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 29 January 2025 21:36">Wednesday 29 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<a href="<p>https://github.com/EarthSciML/earthsci.dev/tree/gh-pages/v0.1.0/assets/Project.toml</p>">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="quickstart/getting_started/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Thursday 30 January 2025 03:46">Thursday 30 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
