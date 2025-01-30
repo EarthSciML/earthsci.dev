@@ -34,6 +34,7 @@ A second main goal of EarthSciML is to make it easy to perform advanced analysis
 
 ```@example index
 using Optimization, OptimizationOptimJL
+using ForwardDiff
 using Statistics
 
 # Set up functions to run the simulation and calculate the error.
@@ -42,32 +43,25 @@ function run_simulation(u)
     p2 = remake_buffer(model, prob.p, Dict(model.SuperFast₊T => T, model.FastJX₊T => T))
     solve(remake(prob, p=p2), Rosenbrock23())
 end
-loss(u, p) = (mean(run_simulation(u)[model.SuperFast₊O3]) - 25)^2
+loss(u) = (mean(run_simulation(u)[model.SuperFast₊O3]) - 25)^2
 
-optfn = OptimizationFunction(loss, Optimization.AutoForwardDiff())
-optprob = OptimizationProblem(optfn, [320.0], ())
+T = [290.0] # Starting guess for the temperature.
+anim = @animate for i in 1:100
+    g = ForwardDiff.gradient(loss, T) # Calculate the gradient of error w.r.t T.
+    global T -= 5g # Update the temperature.
 
-# This is some code to save the results for making an animation.
-Ts = []
-sols = []
-function callback(state, loss_val) 
-    push!(Ts, state.u[1])
-    push!(sols, run_simulation(state.u))
-    false
-end
-
-# This line actually does the optimization.
-sol = solve(optprob, BFGS(), callback=callback)
-
-# The rest of the code makes the animation.
-anim = @animate for i in eachindex(Ts)
-    o3avg = round(mean(sols[i][model.SuperFast₊O3]), digits=3)
-    plot(sols[i].t, sols[i][model.SuperFast₊O3], label=:none, ylim=(0, 35),
+    # Make a plot of the simulation.
+    sol = run_simulation(T)
+    o3avg = round(mean(sol[model.SuperFast₊O3]), digits=3)
+    plot(sol.t, sol[model.SuperFast₊O3], label=:none, ylim=(0, 35),
         xlabel="Time (s)", ylabel="O₃ Concentration (ppb)",
-        title="Step=$i; T=$(round(Ts[i], digits=3)) K; O₃ avg.=$(o3avg) ppb", )
-    plot!([sols[i].t[begin], sols[i].t[end]], [o3avg, o3avg], label=:none,
+        title="Step=$i; T=$(round(T[1], digits=3)) K; O₃ avg.=$(o3avg) ppb", )
+    plot!([sol.t[begin], sol.t[end]], [o3avg, o3avg], label=:none,
         linecolor=:black, linestyle=:dash)
 
+    if abs(g[1]) < 1e-2
+        break
+    end
 end
 gif(anim, fps = 5)
 ```
