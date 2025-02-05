@@ -15,6 +15,7 @@ To start, we will define an air quality model similar to the one described in [U
 ```@example optimization
 using EarthSciMLBase, GasChem, AtmosphericDeposition, EarthSciData
 using EnvironmentalTransport, ModelingToolkit, OrdinaryDiffEq
+using DiffEqCallbacks
 using FiniteDiff
 using SymbolicIndexingInterface
 using ModelingToolkit: t
@@ -103,7 +104,7 @@ nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge
 usize = size(EarthSciMLBase.init_u(model_sys, domain))
 iNO2 = only(findall((x) -> x==Symbol("SuperFast₊NO2(t)"), Symbol.(unknowns(model_sys))))
 
-st = SolverStrangSerial(Rosenbrock23(), dt)
+st = SolverStrangSerial(Rosenbrock23(), dt, callback=PositiveDomain(save=false))
 prob = ODEProblem(model, st)
 ```
 The last thing that we need to set up is an objective function: what do we want to calculate the gradient with respect to?

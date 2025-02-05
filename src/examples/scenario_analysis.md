@@ -7,6 +7,7 @@ First, we create a base model containing all the components that will be shared 
 ```@example scenario_analysis
 using EarthSciMLBase, GasChem, AtmosphericDeposition, EarthSciData
 using EnvironmentalTransport, ModelingToolkit, OrdinaryDiffEq
+using DiffEqCallbacks
 using Dates, Plots, NCDatasets
 using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
 
@@ -62,7 +63,7 @@ scenario_model = couple(base_model, scenario_emis, NetCDFOutputter(scenario_outf
 Once we've configured both of out models, we can run them both as described in [Using EarthSciML](@ref) above:
 
 ```@example scenario_analysis
-st = SolverStrangSerial(Rosenbrock23(), dt)
+st = SolverStrangSerial(Rosenbrock23(), dt, callback=PositiveDomain(save=false))
 
 bau_prob = ODEProblem(bau_model, st)
 sol = solve(bau_prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,

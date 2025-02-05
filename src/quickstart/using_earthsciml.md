@@ -161,12 +161,15 @@ So for example in the figure above we can see that `WetDeposition` is coupled to
 
 Running a 3D simulation is similar to running the box model simulation, except we need to specify a [SolverStrategy](https://base.earthsci.dev/stable/api/#EarthSciMLBase.SolverStrategy) which will tell the solver how to combine the non-spatial and spatial components of the model.
 Here we will use [SolverStrangSerial](https://base.earthsci.dev/stable/api/#EarthSciMLBase.SolverStrangSerial).
+We also add in a [callback](https://docs.sciml.ai/DiffEqCallbacks/stable/step_control/#DiffEqCallbacks.PositiveDomain) to ensure that the concentrations of the chemical species remain positive.
 
 We then use our solver strategy as an argument to `ODEProblem`.
 We also specify some options in `solve` show a progress bar (because this simulation can take a while) and to prevent the output data from being saved in memory because we have already specified that we want to save it to disk instead.
 
 ```@example using_earthsciml
-st = SolverStrangSerial(Rosenbrock23(), dt)
+using DiffEqCallbacks
+
+st = SolverStrangSerial(Rosenbrock23(), dt, callback=PositiveDomain(save=false))
 
 prob = ODEProblem(model_3d, st)
 
@@ -188,8 +191,8 @@ ds = NCDataset(outfile, "r");
 cross_section_lat = size(ds["SuperFast₊O3"], 2) ÷ 2
 anim = @animate for i ∈ 1:size(ds["SuperFast₊O3"])[4]
     Plots.plot(
-        Plots.heatmap(ds["SuperFast₊O3"][:, :, 1, i]', title="Ground-Level"),
-        Plots.heatmap(ds["SuperFast₊O3"][:, cross_section_lat, :, i]', 
+        Plots.heatmap(ds["SuperFast₊O3"][:, :, 1, i]', title="Ground-Level", clim=(0,200)),
+        Plots.heatmap(ds["SuperFast₊O3"][:, cross_section_lat, :, i]', clim=(0,200), 
             title="Vertical Cross-Section"),
         size=(1200, 400)
     )
