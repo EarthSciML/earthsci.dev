@@ -16,18 +16,20 @@ To start, we will define an air quality model similar to the one described in [U
 using EarthSciMLBase, GasChem, AtmosphericDeposition, EarthSciData
 using EnvironmentalTransport, ModelingToolkit, OrdinaryDiffEq
 using DiffEqCallbacks
-using FiniteDiff
+using ForwardDiff
 using SymbolicIndexingInterface
 using ModelingToolkit: t
 using Dates, Plots, NCDatasets, Statistics, DynamicQuantities
 using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
+using LinearSolve
+using DiffEqCallbacks
 
 domain = DomainInfo(
     DateTime(2016, 5, 1),
     DateTime(2016, 5, 1, 1);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
-    levrange = 1:15,
+    levrange = 1:2,
     dtype = Float64)
 
 geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
@@ -36,15 +38,13 @@ geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaroun
 emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream=false)
 emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
 
-dt = 300.0 # Operator splitting timestep
-
 model_base = couple(
     SuperFast(),
     FastJX(),
     #DrydepositionG(), Not currently working
     Wetdeposition(),
-    AdvectionOperator(dt, upwind1_stencil, ZeroGradBC()),
-    emis,
+    AdvectionOperator(NaN, upwind1_stencil, ZeroGradBC()),
+    #emis, # Not currently working with automatic differentiation
     geosfp,
     domain
 )
@@ -104,8 +104,8 @@ nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge
 usize = size(EarthSciMLBase.init_u(model_sys, domain))
 iNO2 = only(findall((x) -> x==Symbol("SuperFast₊NO2(t)"), Symbol.(unknowns(model_sys))))
 
-st = SolverStrangSerial(Rosenbrock23(), dt, callback=PositiveDomain(save=false))
-prob = ODEProblem(model, st)
+st = SolverIMEX(stiff_sparse=false)
+prob = ODEProblem{false}(model, st, callback=PositiveDomain(save=false))
 ```
 The last thing that we need to set up is an objective function: what do we want to calculate the gradient with respect to?
 In this case, let's say that we know that our model should always output an NO2 concentration of 42 ppb, so we're interested in finding nudging factors that minimize the difference between the model's predicted NO2 concentration and 42 ppb at all times.
@@ -116,9 +116,8 @@ To operationalize this goal, we create a function that we'll call `loss` that ta
 function loss(nudge_vals)
     the_answer = 42.0
     new_params = remake_buffer(model_sys, prob.p, Dict(nudge_params .=> nudge_vals))
-    #newprob = remake(prob, p=new_params)#, u0=eltype(nudge_vals).(prob.u0))
-    newprob = ODEProblem(model, st, p=new_params)
-    sol = solve(newprob, SSPRK22(); dt=dt, progress=true, progress_steps=1, saveat=600)
+    newprob = remake(prob, p=new_params)
+    sol = solve(newprob, KenCarp5(linsolve=LUFactorization()); progress=true, progress_steps=1, saveat=3600)
     mean([mean((reshape(ui, usize...)[iNO2] .- the_answer).^2) for ui in sol.u])
 end
 ```
@@ -139,11 +138,10 @@ So what values of the nudging factors should we use to make the loss as small as
 
 The first step to get that answer is to calculate the gradient of the loss function with respect to the nudging factors, so we know which direction to change each nudging factor to make the loss smaller.
 
-Ideally, we would use automatic differentiation to calculate the gradient, but that's not working at the moment, we will use finite differences to calculate the gradient instead:
+We can use automatic differentiation to efficiently calculate the gradient:
 
 ```@example optimization
-# ForwardDiff.gradient(loss, zeros(13))
-grad = FiniteDiff.finite_difference_gradient(loss, zeros(13))
+grad = ForwardDiff.gradient(loss, zeros(13))
 
 bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
     "CH3OOH", "ISOP", "H2O2", "HNO3"], grad, permute=(:x, :y), size=(400, 250),

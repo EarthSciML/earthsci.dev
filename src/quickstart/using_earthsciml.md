@@ -63,7 +63,7 @@ using Dates
 
 domain = DomainInfo(
     DateTime(2016, 5, 1),
-    DateTime(2016, 5, 3);
+    DateTime(2016, 5, 2);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:15,
