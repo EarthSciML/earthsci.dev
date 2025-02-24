@@ -16,7 +16,7 @@ To start, we will define an air quality model similar to the one described in [U
 using EarthSciMLBase, GasChem, AtmosphericDeposition, EarthSciData
 using EnvironmentalTransport, ModelingToolkit, OrdinaryDiffEq
 using DiffEqCallbacks
-using ForwardDiff
+using ForwardDiff, DiffResults
 using SymbolicIndexingInterface
 using ModelingToolkit: t
 using Dates, Plots, NCDatasets, Statistics, DynamicQuantities
@@ -26,7 +26,7 @@ using DiffEqCallbacks
 
 domain = DomainInfo(
     DateTime(2016, 5, 1),
-    DateTime(2016, 5, 1, 1);
+    DateTime(2016, 5, 1, 4);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
     levrange = 1:2,
@@ -99,12 +99,13 @@ Before we do that, though, we need to get a few preliminaries out of the way, in
 
 ```@example optimization
 model_sys = convert(ODESystem, model)
+model_sys, = EarthSciMLBase._prepare_coord_sys(model_sys, domain)
 nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge_c, i), Symbol.(parameters(model_sys)))) for i in 1:13]]
 
 usize = size(EarthSciMLBase.init_u(model_sys, domain))
 iNO2 = only(findall((x) -> x==Symbol("SuperFast₊NO2(t)"), Symbol.(unknowns(model_sys))))
 
-st = SolverIMEX(stiff_sparse=false)
+st = SolverIMEX(MapThreads(), stiff_sparse=false)
 prob = ODEProblem{false}(model, st, callback=PositiveDomain(save=false))
 ```
 The last thing that we need to set up is an objective function: what do we want to calculate the gradient with respect to?
@@ -115,10 +116,10 @@ To operationalize this goal, we create a function that we'll call `loss` that ta
 ```@example optimization
 function loss(nudge_vals)
     the_answer = 42.0
-    new_params = remake_buffer(model_sys, prob.p, Dict(nudge_params .=> nudge_vals))
+    new_params = remake_buffer(model_sys, prob.p, nudge_params, nudge_vals)
     newprob = remake(prob, p=new_params)
     sol = solve(newprob, KenCarp5(linsolve=LUFactorization()); progress=true, progress_steps=1, saveat=3600)
-    mean([mean((reshape(ui, usize...)[iNO2] .- the_answer).^2) for ui in sol.u])
+    mean([mean((reshape(ui, usize...)[iNO2, :, :, :] .- the_answer).^2) for ui in sol.u])
 end
 ```
 Since there are 13 chemical species in our model, we have 13 nudging factors, so we can run the `loss` function with a vector of 13 zeros to see what the loss is with no nudging factors applied.
@@ -141,14 +142,95 @@ The first step to get that answer is to calculate the gradient of the loss funct
 We can use automatic differentiation to efficiently calculate the gradient:
 
 ```@example optimization
-grad = ForwardDiff.gradient(loss, zeros(13))
+nudge = zeros(13)
+gradresult = DiffResults.GradientResult(nudge)
+ForwardDiff.gradient!(gradresult, loss, nudge)
+lossvals = [DiffResults.value(gradresult)]
 
 bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
-    "CH3OOH", "ISOP", "H2O2", "HNO3"], grad, permute=(:x, :y), size=(400, 250),
+    "CH3OOH", "ISOP", "H2O2", "HNO3"], DiffResults.gradient(gradresult), permute=(:x, :y), size=(400, 250),
     label=:none, xlabel="Species", ylabel="Nudging Sensitivity")
 ```
 
 Now that's a start! We can see that the error in NO2 concentrations is most sensitive to adjustments to NO2 dynamics (unsurprisingly), but also sensitive to adjustments in CH3O2, NO, and O3.
 
-That's all we have for now, but we will add to this example as we build out the EarthSciML optimization and analysis capabilities.
-Check back soon!
+## Gradient Descent
+
+The next step is to change our nudging factors to minimize our "loss" metric, thus improving the performance of our model.
+We can do this using [Gradient Descent](https://en.wikipedia.org/wiki/Gradient_descent), which in this case will involve iteratively adjusting our "nudge factors" in the opposite direction of the gradient of the loss function.
+To do this we first have to choose a [learning rate](https://en.wikipedia.org/wiki/Learning_rate), which specifies how quickly we want to adjust our nudging factors with each iteration.
+Then, we update our nudge factors and calculate the gradient again:
+
+```@example optimization
+learning_rate = 5e-12
+nudge .-= learning_rate .* DiffResults.gradient(gradresult)
+ForwardDiff.gradient!(gradresult, loss, nudge)
+push!(lossvals, DiffResults.value(gradresult))
+```
+
+You can see that once we do that the loss decreases, and the gradient decreases as well:
+
+```@example optimization
+bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
+    "CH3OOH", "ISOP", "H2O2", "HNO3"], DiffResults.gradient(gradresult), permute=(:x, :y), size=(400, 250),
+    label=:none, xlabel="Species", ylabel="Nudging Sensitivity")
+```
+
+Let's repeat the process several more times until the loss stops decreasing quickly. 
+In practice one might want to use more iterations until the loss stops decreasing at all.
+
+```@example optimization
+for i in 1:5
+    nudge .-= learning_rate .* DiffResults.gradient(gradresult)
+    ForwardDiff.gradient!(gradresult, loss, nudge)
+    @info "Loss", DiffResults.value(gradresult)
+    push!(lossvals, DiffResults.value(gradresult))
+end
+plot(lossvals, xlabel="Iteration", ylabel="Loss", label=:none)
+```
+
+As you can see in the plot above, we have succeed in decreasing the loss by adjusting the nudging factors.
+Now, let's look at how our learned nudging factors affect the dynamics of the model:
+
+```@example optimization
+prob = ODEProblem(model, st, callback=PositiveDomain(save=false))
+function run(nudge_vals)
+    new_params = remake_buffer(model_sys, prob.p, nudge_params, nudge_vals)
+    newprob = remake(prob, p=new_params)
+    solve(newprob, KenCarp5(linsolve=LUFactorization()); progress=true, progress_steps=1, saveat=3600)
+end
+original = run(zeros(13))
+final = run(nudge)
+
+originalNO2 = reshape(Array(original), usize..., length(original.u))[iNO2, :, :, 1, :]
+finalNO2 = reshape(Array(final), usize..., length(final.u))[iNO2, :, :, 1, :]
+no2lim = (0, max(maximum([finalNO2; originalNO2])))
+originalNO2err, finalNO2err = originalNO2 .- 42, finalNO2 .- 42
+errlim = maximum(abs.([originalNO2err; finalNO2err]))
+errlim = (-errlim, errlim)
+
+anim = @animate for i ∈ 1:size(originalNO2, 3)
+    plot(
+        heatmap(originalNO2[:, :, i], clim=no2lim, c=:matter, cbar_title="Original Conc. (ppb)"),
+        heatmap(finalNO2[:, :, i], clim=no2lim, c=:matter, cbar_title="Nudged Conc. (ppb)"),
+        heatmap(originalNO2err[:, :, i], c=:RdBu, clim=errlim, cbar_title="Original Err. (ppb)"),
+        heatmap(finalNO2err[:, :, i], c=:RdBu, clim=errlim, cbar_title="Nudged Err. (ppb)"),
+        size=(800, 450)
+    )
+end
+gif(anim, fps = 5)
+```
+
+As you can see above, the model predictions are now closer on average to the desired NO2 concentration of 42 ppb than they were before nudging.
+
+Finally, here are the final nudging factors that we learned:
+
+```@example optimization
+bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
+    "CH3OOH", "ISOP", "H2O2", "HNO3"], nudge, permute=(:x, :y), size=(400, 250),
+    ylim=(-maximum(abs.(nudge)), maximum(abs.(nudge))),
+    label=:none, xlabel="Species", ylabel="Final Nudge Factors")
+```
+
+This is just one example of how you can use EarthSciML for machine learning.
+However, the same principles can be applied to many other types of models and analyses! What would you like to do?
