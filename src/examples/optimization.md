@@ -22,21 +22,14 @@ using ModelingToolkit: t
 using Dates, Plots, NCDatasets, Statistics, DynamicQuantities
 using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
 using LinearSolve
-using DiffEqCallbacks
 
 domain = DomainInfo(
     DateTime(2016, 5, 1),
     DateTime(2016, 5, 1, 4);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
-    latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
-    levrange = 1:2,
+    latrange = deg2rad(25):deg2rad(2.0):deg2rad(53.7),
+    levrange = 1:7,
     dtype = Float64)
-
-geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
-geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
-
-emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream=false)
-emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
 
 model_base = couple(
     SuperFast(),
@@ -44,8 +37,8 @@ model_base = couple(
     #DrydepositionG(), Not currently working
     Wetdeposition(),
     AdvectionOperator(NaN, upwind1_stencil, ZeroGradBC()),
-    #emis, # Not currently working with automatic differentiation
-    geosfp,
+    NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain),
+    GEOSFP("0.5x0.625_NA", domain),
     domain
 )
 ```
@@ -193,7 +186,8 @@ As you can see in the plot above, we have succeed in decreasing the loss by adju
 Now, let's look at how our learned nudging factors affect the dynamics of the model:
 
 ```@example optimization
-prob = ODEProblem(model, st, callback=PositiveDomain(save=false))
+nudge = [1.3118346045868927e-6, -3.2253862388898707e-12, -2.1415011069423774e-12, 0.0, 9.928356136476186e-6, 5.217856860043019e-5, -1.1395086245470957e-10, -1.843674019511693e-8, 5.144225893431737e-9, -3.979370586978448e-9, -1.1382228036533714e-8, -1.1907353042558296e-8, 0.0]
+prob = ODEProblem{false}(model, st, callback=PositiveDomain(save=false))
 function run(nudge_vals)
     new_params = remake_buffer(model_sys, prob.p, nudge_params, nudge_vals)
     newprob = remake(prob, p=new_params)

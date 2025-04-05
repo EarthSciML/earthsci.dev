@@ -95,7 +95,7 @@ using AtmosphericDeposition
 model = couple(
     SuperFast(),
     FastJX(),
-    #DrydepositionG(), Not currently working
+    DrydepositionG(),
     Wetdeposition(),
     emis,
     geosfp,
@@ -108,7 +108,8 @@ This can allow us study the dynamics or diagnose any programs without using a lo
 
 ```@example using_earthsciml
 model_sys = convert(ODESystem, model)
-sol = solve(ODEProblem(model_sys), Rosenbrock23(), tspan=get_tspan(domain))
+sol = solve(ODEProblem(model_sys, jac=true), Rosenbrock23(), 
+    tspan=get_tspan(domain))
 
 plot(unix2datetime.(sol.t), sol[model_sys.SuperFast₊O3],
     ylabel="O₃ Concentration (ppb)", 
@@ -149,8 +150,8 @@ g = graph(model_3d)
 f = Figure(backgroundcolor = :transparent)
 ax = Axis(f[1, 1], backgroundcolor = :transparent)
 p = graphplot!(ax, g; ilabels=labels(g), edge_color=:gray)
-CairoMakie.xlims!(ax, -2.4, 1.5)
-CairoMakie.ylims!(ax, -2.3, 2.5)
+CairoMakie.xlims!(ax, -3.1, 1.9)
+CairoMakie.ylims!(ax, -2.4, 2.3)
 hidedecorations!(ax); hidespines!(ax)
 f
 ```
@@ -169,11 +170,13 @@ We also specify some options in `solve` show a progress bar (because this simula
 ```@example using_earthsciml
 using DiffEqCallbacks
 
-st = SolverStrangSerial(Rosenbrock23(), dt, callback=PositiveDomain(save=false))
+st = SolverStrangSerial(Rosenbrock23(), dt,
+    callback=PositiveDomain(save=false), jac=true)
 
 prob = ODEProblem(model_3d, st)
 
-using ProgressLogging # Needed for progress bar. Use `TerminalLoggers` if in a terminal.
+using ProgressLogging # Needed for progress bar.
+# using TerminalLoggers # Needed for progress bar if running in a terminal.
 
 sol = solve(prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
     save_on=false, save_start=false, save_end=false, initialize_save=false)
@@ -191,8 +194,8 @@ ds = NCDataset(outfile, "r");
 cross_section_lat = size(ds["SuperFast₊O3"], 2) ÷ 2
 anim = @animate for i ∈ 1:size(ds["SuperFast₊O3"])[4]
     Plots.plot(
-        Plots.heatmap(ds["SuperFast₊O3"][:, :, 1, i]', title="Ground-Level", clim=(0,200)),
-        Plots.heatmap(ds["SuperFast₊O3"][:, cross_section_lat, :, i]', clim=(0,200), 
+        Plots.heatmap(ds["SuperFast₊O3"][:, :, 1, i]', title="Ground-Level", clim=(0,75)),
+        Plots.heatmap(ds["SuperFast₊O3"][:, cross_section_lat, :, i]', clim=(0,75), 
             title="Vertical Cross-Section"),
         size=(1200, 400)
     )
