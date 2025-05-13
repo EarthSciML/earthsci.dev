@@ -20,10 +20,10 @@ It's just an ODESystem, so we can run it like any other ModelingToolkit model:
 ```@example using_earthsciml
 using ModelingToolkit, OrdinaryDiffEq, Plots
 
-sol = solve(ODEProblem(structural_simplify(chem)), tspan=(0,2*3600))
+sol = solve(ODEProblem(structural_simplify(chem)), tspan = (0, 2*3600))
 
-plot(sol, legend=:topright, xlabel="Time (s)", ylabel="Concentration (ppb)",
-    title="SuperFast Chemistry")
+plot(sol, legend = :topright, xlabel = "Time (s)", ylabel = "Concentration (ppb)",
+    title = "SuperFast Chemistry")
 ```
 
 ## Coupling Model Components
@@ -41,15 +41,15 @@ chem_phot = couple(
 )
 ```
 
-The above example couples the SuperFast with the [Fast-JX](https://gaschem.earthsci.dev/stable/api/#GasChem.FastJX-Tuple{}) photolysis model, and when we run them together as a coupled model, we can see a characteristic diurnal cycle in the O₃ concentration, were concentrations are lower at night and higher during the day owing to photochemistry:
+The above example couples the SuperFast with the [Fast-JX](https://gaschem.earthsci.dev/stable/api/#GasChem.FastJX-Tuple%7B%7D) photolysis model, and when we run them together as a coupled model, we can see a characteristic diurnal cycle in the O₃ concentration, were concentrations are lower at night and higher during the day owing to photochemistry:
 
 ```@example using_earthsciml
 chem_phot_sys = convert(ODESystem, chem_phot)
-sol = solve(ODEProblem(chem_phot_sys), tspan=(0,3*24*3600))
+sol = solve(ODEProblem(chem_phot_sys), tspan = (0, 3*24*3600))
 
-plot(sol.t, sol[chem_phot_sys.SuperFast₊O3], legend=:topright, xlabel="Time (s)", 
-    ylabel="O₃ Concentration (ppb)", label=:none, 
-    title="SuperFast Chemistry + Fast-JX Photolysis")
+plot(sol.t, sol[chem_phot_sys.SuperFast₊O3], legend = :topright, xlabel = "Time (s)",
+    ylabel = "O₃ Concentration (ppb)", label = :none,
+    title = "SuperFast Chemistry + Fast-JX Photolysis")
 ```
 
 # External Data
@@ -69,15 +69,15 @@ domain = DomainInfo(
     levrange = 1:15,
     dtype = Float64)
 
-emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream=false)
-emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
+emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream = false)
+emis = EarthSciMLBase.copy_with_change(emis, discrete_events = []) # Workaround for bug.
 
 equations(emis)[1:5]
 ```
 
 ```@example using_earthsciml
-geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
-geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
+geosfp = GEOSFP("0.5x0.625_NA", domain; stream = false)
+geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events = []) # Workaround for bug.
 
 equations(geosfp)[1:5]
 ```
@@ -98,23 +98,24 @@ model = couple(
     DrydepositionG(),
     Wetdeposition(),
     emis,
-    geosfp,
+    geosfp
 )
 ```
+
 ## Box Model Simulation
 
-Once we specify our model, we can try running it in a zero-dimensional "box model" format. 
+Once we specify our model, we can try running it in a zero-dimensional "box model" format.
 This can allow us study the dynamics or diagnose any programs without using a lot of computing power.
 
 ```@example using_earthsciml
 model_sys = convert(ODESystem, model)
-sol = solve(ODEProblem(model_sys, jac=true), Rosenbrock23(), 
-    tspan=get_tspan(domain))
+sol = solve(ODEProblem(model_sys, jac = true), Rosenbrock23(),
+    tspan = get_tspan(domain))
 
 plot(unix2datetime.(sol.t), sol[model_sys.SuperFast₊O3],
-    ylabel="O₃ Concentration (ppb)", 
-    xlabel="Time", label=:none, 
-    title="Air Quality Box Model")
+    ylabel = "O₃ Concentration (ppb)",
+    xlabel = "Time", label = :none,
+    title = "Air Quality Box Model")
 ```
 
 ## 3D Model Simulation
@@ -149,10 +150,11 @@ using CairoMakie, GraphMakie
 g = graph(model_3d)
 f = Figure(backgroundcolor = :transparent)
 ax = Axis(f[1, 1], backgroundcolor = :transparent)
-p = graphplot!(ax, g; ilabels=labels(g), edge_color=:gray)
+p = graphplot!(ax, g; ilabels = labels(g), edge_color = :gray)
 CairoMakie.xlims!(ax, -3.1, 1.9)
 CairoMakie.ylims!(ax, -2.4, 2.3)
-hidedecorations!(ax); hidespines!(ax)
+hidedecorations!(ax);
+hidespines!(ax)
 f
 ```
 
@@ -171,15 +173,15 @@ We also specify some options in `solve` show a progress bar (because this simula
 using DiffEqCallbacks
 
 st = SolverStrangSerial(Rosenbrock23(), dt,
-    callback=PositiveDomain(save=false), jac=true)
+    callback = PositiveDomain(save = false), jac = true)
 
 prob = ODEProblem(model_3d, st)
 
 using ProgressLogging # Needed for progress bar.
 # using TerminalLoggers # Needed for progress bar if running in a terminal.
 
-sol = solve(prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
-    save_on=false, save_start=false, save_end=false, initialize_save=false)
+sol = solve(prob, SSPRK22(); dt = dt, progress = true, progress_steps = 1,
+    save_on = false, save_start = false, save_end = false, initialize_save = false)
 ```
 
 ### Visualizing 3D model results
@@ -192,12 +194,13 @@ using NCDatasets
 ds = NCDataset(outfile, "r");
 
 cross_section_lat = size(ds["SuperFast₊O3"], 2) ÷ 2
-anim = @animate for i ∈ 1:size(ds["SuperFast₊O3"])[4]
+anim = @animate for i in 1:size(ds["SuperFast₊O3"])[4]
     Plots.plot(
-        Plots.heatmap(ds["SuperFast₊O3"][:, :, 1, i]', title="Ground-Level", clim=(0,75)),
-        Plots.heatmap(ds["SuperFast₊O3"][:, cross_section_lat, :, i]', clim=(0,75), 
-            title="Vertical Cross-Section"),
-        size=(1200, 400)
+        Plots.heatmap(
+            ds["SuperFast₊O3"][:, :, 1, i]', title = "Ground-Level", clim = (0, 75)),
+        Plots.heatmap(ds["SuperFast₊O3"][:, cross_section_lat, :, i]', clim = (0, 75),
+            title = "Vertical Cross-Section"),
+        size = (1200, 400)
     )
 end
 gif(anim, fps = 5)

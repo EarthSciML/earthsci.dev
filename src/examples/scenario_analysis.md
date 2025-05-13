@@ -19,11 +19,11 @@ domain = DomainInfo(
     levrange = 1:15,
     dtype = Float64)
 
-geosfp = GEOSFP("0.5x0.625_NA", domain; stream=false)
-geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events=[]) # Workaround for bug.
+geosfp = GEOSFP("0.5x0.625_NA", domain; stream = false)
+geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events = []) # Workaround for bug.
 
-emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream=false)
-emis = EarthSciMLBase.copy_with_change(emis, discrete_events=[]) # Workaround for bug.
+emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream = false)
+emis = EarthSciMLBase.copy_with_change(emis, discrete_events = []) # Workaround for bug.
 
 dt = 300.0 # Operator splitting timestep
 
@@ -42,54 +42,57 @@ base_model = couple(
 Once we've created a base model, we can then add in the components that will be unique to each scenario. In this case, we will create two scenarios: a "business as usual" scenario and a "reduced emissions" scenario. For our business as usual scenario, the only component we need to add is one that writes the model output to a file called `bau_output.nc`.
 
 ```@example scenario_analysis
-bau_outfile = ("RUNNER_TEMP" ∈ keys(ENV) ? ENV["RUNNER_TEMP"] : tempname()) * "bau_output.nc" # This is just a location to save the output.
+bau_outfile = ("RUNNER_TEMP" ∈ keys(ENV) ? ENV["RUNNER_TEMP"] : tempname()) *
+              "bau_output.nc" # This is just a location to save the output.
 bau_model = couple(base_model, NetCDFOutputter(bau_outfile, 3600.0))
 ```
 
 In this case, we want to explore the impacts of a 30% reduction in emissions from the "onroad" sector.
 To do this, we initialize a new emissions component only containing the emissions from the onroad sector, and we specify a scale factor of -0.3, which when added to the total emissions from all sectors that are already present in the base model represents the total emissions minus 30% of the onroad emissions.
-(Additional information about the emissions data we're using is available [here](https://data.earthsci.dev/dev/api/#EarthSciData.NEI2016MonthlyEmis-Tuple{AbstractString,%20EarthSciMLBase.DomainInfo}).)
+(Additional information about the emissions data we're using is available [here](https://data.earthsci.dev/dev/api/#EarthSciData.NEI2016MonthlyEmis-Tuple%7BAbstractString,%20EarthSciMLBase.DomainInfo%7D).)
 We also create a component that writes the model output to a file called `scenario_output.nc`, and then we couple both of these components to the base model to create the scenario model.
 
 ```@example scenario_analysis
-@named scenario_emis = NEI2016MonthlyEmis("onroad", domain; scale=-0.3, stream=false)
-scenario_emis = EarthSciMLBase.copy_with_change(scenario_emis, discrete_events=[]) # Workaround for bug.
+@named scenario_emis = NEI2016MonthlyEmis("onroad", domain; scale = -0.3, stream = false)
+scenario_emis = EarthSciMLBase.copy_with_change(scenario_emis, discrete_events = []) # Workaround for bug.
 
-
-scenario_outfile = ("RUNNER_TEMP" ∈ keys(ENV) ? ENV["RUNNER_TEMP"] : tempname()) * "scenario_output.nc"
-scenario_model = couple(base_model, scenario_emis, NetCDFOutputter(scenario_outfile, 3600.0))
+scenario_outfile = ("RUNNER_TEMP" ∈ keys(ENV) ? ENV["RUNNER_TEMP"] : tempname()) *
+                   "scenario_output.nc"
+scenario_model = couple(
+    base_model, scenario_emis, NetCDFOutputter(scenario_outfile, 3600.0))
 ```
 
 Once we've configured both of out models, we can run them both as described in [Using EarthSciML](@ref) above:
 
 ```@example scenario_analysis
-st = SolverStrangSerial(Rosenbrock23(), dt, callback=PositiveDomain(save=false))
+st = SolverStrangSerial(Rosenbrock23(), dt, callback = PositiveDomain(save = false))
 
 bau_prob = ODEProblem(bau_model, st)
-sol = solve(bau_prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
-    save_on=false, save_start=false, save_end=false, initialize_save=false)
-
+sol = solve(bau_prob, SSPRK22(); dt = dt, progress = true, progress_steps = 1,
+    save_on = false, save_start = false, save_end = false, initialize_save = false)
 
 scenario_prob = ODEProblem(scenario_model, st)
-sol = solve(scenario_prob, SSPRK22(); dt=dt, progress=true, progress_steps=1,
-    save_on=false, save_start=false, save_end=false, initialize_save=false)
+sol = solve(scenario_prob, SSPRK22(); dt = dt, progress = true, progress_steps = 1,
+    save_on = false, save_start = false, save_end = false, initialize_save = false)
 nothing # hide
 ```
 
-One the simulations are complete, we can compare the results of the two scenarios. 
+One the simulations are complete, we can compare the results of the two scenarios.
 In this case, we'll create an animation that shows the difference in ground-level ozone concentrations between the two scenarios at each time step:
 
 ```@example scenario_analysis
 bau_data = NCDataset(bau_outfile, "r");
 scenario_data = NCDataset(scenario_outfile, "r");
 
-anim = @animate for i ∈ 1:size(bau_data["SuperFast₊O3"])[4]
+anim = @animate for i in 1:size(bau_data["SuperFast₊O3"])[4]
     Plots.plot(
-        Plots.heatmap(bau_data["SuperFast₊O3"][:, :, 1, i]', title="Business as Usual"),
-        Plots.heatmap(scenario_data["SuperFast₊O3"][:, :, 1, i]', title="Scenario"),
-        Plots.heatmap(scenario_data["SuperFast₊O3"][:, :, 1, i]' - 
-            bau_data["SuperFast₊O3"][:, :, 1, i]', title="Difference"),
-        size=(1900, 400), layout=(1, 3)
+        Plots.heatmap(bau_data["SuperFast₊O3"][:, :, 1, i]', title = "Business as Usual"),
+        Plots.heatmap(scenario_data["SuperFast₊O3"][:, :, 1, i]', title = "Scenario"),
+        Plots.heatmap(
+            scenario_data["SuperFast₊O3"][:, :, 1, i]' -
+            bau_data["SuperFast₊O3"][:, :, 1, i]',
+            title = "Difference"),
+        size = (1900, 400), layout = (1, 3)
     )
 end
 gif(anim, fps = 5)

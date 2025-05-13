@@ -40,7 +40,4 @@ makedocs(;
     ]
 )
 
-deploydocs(;
-    repo = "github.com/EarthSciML/earthsci.dev",
-    devbranch = "main"
-)
+deploydocs(; repo = "github.com/EarthSciML/earthsci.dev", devbranch = "main")

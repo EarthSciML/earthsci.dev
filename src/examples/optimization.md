@@ -52,36 +52,43 @@ For more information about the specifics of what we're doing here, you can refer
 struct NudgeCoupler
     sys
 end
-function Nudge(; name=:nudge)
+function Nudge(; name = :nudge)
     vars = []
     params = []
     for i in 1:13
         n = Symbol(:nudge_, i)
-        push!(vars, only(@variables $n(t) = 0.0 [unit = u"s^-1", description = "Nudge for species $i"]))
+        push!(vars,
+            only(@variables $n(t) = 0.0 [
+                unit = u"s^-1", description = "Nudge for species $i"]))
         cn = Symbol(:nudge_c, i)
-        push!(params, only(@parameters $(cn) = 0.0 [unit = u"s^-1", description = "Nudge constant for species $i"]))
+        push!(params,
+            only(@parameters $(cn) = 0.0 [
+                unit = u"s^-1", description = "Nudge constant for species $i"]))
     end
     eqs = vars .~ params
-    ODESystem(eqs, t, [vars...], [params...]; name=name, metadata=Dict(:coupletype => NudgeCoupler))
+    ODESystem(eqs, t, [vars...], [params...]; name = name,
+        metadata = Dict(:coupletype => NudgeCoupler))
 end
 
 function EarthSciMLBase.couple2(c::GasChem.SuperFastCoupler, n::NudgeCoupler)
     c, n = c.sys, n.sys
-    operator_compose(c, n, Dict(
-        c.O3 => n.nudge_1 => c.O3,
-        c.OH => n.nudge_2 => c.OH,
-        c.HO2 => n.nudge_3 => c.HO2,
-        c.H2O => n.nudge_4 => c.H2O,
-        c.NO => n.nudge_5 => c.NO,
-        c.NO2 => n.nudge_6 => c.NO2,
-        c.CH3O2 => n.nudge_7 => c.CH3O2,
-        c.CH2O => n.nudge_8 => c.CH2O,
-        c.CO => n.nudge_9 => c.CO,
-        c.CH3OOH => n.nudge_10 => c.CH3OOH,
-        c.ISOP => n.nudge_11 => c.ISOP,
-        c.H2O2 => n.nudge_12 => c.H2O2,
-        c.HNO3 => n.nudge_13 => c.HNO3,
-    ))
+    operator_compose(c,
+        n,
+        Dict(
+            c.O3 => n.nudge_1 => c.O3,
+            c.OH => n.nudge_2 => c.OH,
+            c.HO2 => n.nudge_3 => c.HO2,
+            c.H2O => n.nudge_4 => c.H2O,
+            c.NO => n.nudge_5 => c.NO,
+            c.NO2 => n.nudge_6 => c.NO2,
+            c.CH3O2 => n.nudge_7 => c.CH3O2,
+            c.CH2O => n.nudge_8 => c.CH2O,
+            c.CO => n.nudge_9 => c.CO,
+            c.CH3OOH => n.nudge_10 => c.CH3OOH,
+            c.ISOP => n.nudge_11 => c.ISOP,
+            c.H2O2 => n.nudge_12 => c.H2O2,
+            c.HNO3 => n.nudge_13 => c.HNO3
+        ))
 end
 
 model = couple(model_base, Nudge())
@@ -93,14 +100,16 @@ Before we do that, though, we need to get a few preliminaries out of the way, in
 ```@example optimization
 model_sys = convert(ODESystem, model)
 model_sys, = EarthSciMLBase._prepare_coord_sys(model_sys, domain)
-nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge_c, i), Symbol.(parameters(model_sys)))) for i in 1:13]]
+nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge_c, i),
+                                          Symbol.(parameters(model_sys)))) for i in 1:13]]
 
 usize = size(EarthSciMLBase.init_u(model_sys, domain))
 iNO2 = only(findall((x) -> x==Symbol("SuperFast₊NO2(t)"), Symbol.(unknowns(model_sys))))
 
-st = SolverIMEX(MapThreads(), stiff_sparse=false)
-prob = ODEProblem{false}(model, st, callback=PositiveDomain(save=false))
+st = SolverIMEX(MapThreads(), stiff_sparse = false)
+prob = ODEProblem{false}(model, st, callback = PositiveDomain(save = false))
 ```
+
 The last thing that we need to set up is an objective function: what do we want to calculate the gradient with respect to?
 In this case, let's say that we know that our model should always output an NO2 concentration of 42 ppb, so we're interested in finding nudging factors that minimize the difference between the model's predicted NO2 concentration and 42 ppb at all times.
 
@@ -110,11 +119,13 @@ To operationalize this goal, we create a function that we'll call `loss` that ta
 function loss(nudge_vals)
     the_answer = 42.0
     new_params = remake_buffer(model_sys, prob.p, nudge_params, nudge_vals)
-    newprob = remake(prob, p=new_params)
-    sol = solve(newprob, KenCarp5(linsolve=LUFactorization()); progress=true, progress_steps=1, saveat=3600)
-    mean([mean((reshape(ui, usize...)[iNO2, :, :, :] .- the_answer).^2) for ui in sol.u])
+    newprob = remake(prob, p = new_params)
+    sol = solve(newprob, KenCarp5(linsolve = LUFactorization());
+        progress = true, progress_steps = 1, saveat = 3600)
+    mean([mean((reshape(ui, usize...)[iNO2, :, :, :] .- the_answer) .^ 2) for ui in sol.u])
 end
 ```
+
 Since there are 13 chemical species in our model, we have 13 nudging factors, so we can run the `loss` function with a vector of 13 zeros to see what the loss is with no nudging factors applied.
 
 ```@example optimization
@@ -140,9 +151,13 @@ gradresult = DiffResults.GradientResult(nudge)
 ForwardDiff.gradient!(gradresult, loss, nudge)
 lossvals = [DiffResults.value(gradresult)]
 
-bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
-    "CH3OOH", "ISOP", "H2O2", "HNO3"], DiffResults.gradient(gradresult), permute=(:x, :y), size=(400, 250),
-    label=:none, xlabel="Species", ylabel="Nudging Sensitivity")
+bar(
+    ["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO",
+        "CH3OOH", "ISOP", "H2O2", "HNO3"],
+    DiffResults.gradient(gradresult),
+    permute = (:x, :y),
+    size = (400, 250),
+    label = :none, xlabel = "Species", ylabel = "Nudging Sensitivity")
 ```
 
 Now that's a start! We can see that the error in NO2 concentrations is most sensitive to adjustments to NO2 dynamics (unsurprisingly), but also sensitive to adjustments in CH3O2, NO, and O3.
@@ -164,12 +179,16 @@ push!(lossvals, DiffResults.value(gradresult))
 You can see that once we do that the loss decreases, and the gradient decreases as well:
 
 ```@example optimization
-bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
-    "CH3OOH", "ISOP", "H2O2", "HNO3"], DiffResults.gradient(gradresult), permute=(:x, :y), size=(400, 250),
-    label=:none, xlabel="Species", ylabel="Nudging Sensitivity")
+bar(
+    ["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO",
+        "CH3OOH", "ISOP", "H2O2", "HNO3"],
+    DiffResults.gradient(gradresult),
+    permute = (:x, :y),
+    size = (400, 250),
+    label = :none, xlabel = "Species", ylabel = "Nudging Sensitivity")
 ```
 
-Let's repeat the process several more times until the loss stops decreasing quickly. 
+Let's repeat the process several more times until the loss stops decreasing quickly.
 In practice one might want to use more iterations until the loss stops decreasing at all.
 
 ```@example optimization
@@ -179,19 +198,23 @@ for i in 1:5
     @info "Loss", DiffResults.value(gradresult)
     push!(lossvals, DiffResults.value(gradresult))
 end
-plot(lossvals, xlabel="Iteration", ylabel="Loss", label=:none)
+plot(lossvals, xlabel = "Iteration", ylabel = "Loss", label = :none)
 ```
 
 As you can see in the plot above, we have succeed in decreasing the loss by adjusting the nudging factors.
 Now, let's look at how our learned nudging factors affect the dynamics of the model:
 
 ```@example optimization
-nudge = [1.3118346045868927e-6, -3.2253862388898707e-12, -2.1415011069423774e-12, 0.0, 9.928356136476186e-6, 5.217856860043019e-5, -1.1395086245470957e-10, -1.843674019511693e-8, 5.144225893431737e-9, -3.979370586978448e-9, -1.1382228036533714e-8, -1.1907353042558296e-8, 0.0]
-prob = ODEProblem{false}(model, st, callback=PositiveDomain(save=false))
+nudge = [1.3118346045868927e-6, -3.2253862388898707e-12, -2.1415011069423774e-12,
+    0.0, 9.928356136476186e-6, 5.217856860043019e-5, -1.1395086245470957e-10,
+    -1.843674019511693e-8, 5.144225893431737e-9, -3.979370586978448e-9,
+    -1.1382228036533714e-8, -1.1907353042558296e-8, 0.0]
+prob = ODEProblem{false}(model, st, callback = PositiveDomain(save = false))
 function run(nudge_vals)
     new_params = remake_buffer(model_sys, prob.p, nudge_params, nudge_vals)
-    newprob = remake(prob, p=new_params)
-    solve(newprob, KenCarp5(linsolve=LUFactorization()); progress=true, progress_steps=1, saveat=3600)
+    newprob = remake(prob, p = new_params)
+    solve(newprob, KenCarp5(linsolve = LUFactorization());
+        progress = true, progress_steps = 1, saveat = 3600)
 end
 original = run(zeros(13))
 final = run(nudge)
@@ -203,13 +226,17 @@ originalNO2err, finalNO2err = originalNO2 .- 42, finalNO2 .- 42
 errlim = maximum(abs.([originalNO2err; finalNO2err]))
 errlim = (-errlim, errlim)
 
-anim = @animate for i ∈ 1:size(originalNO2, 3)
+anim = @animate for i in 1:size(originalNO2, 3)
     plot(
-        heatmap(originalNO2[:, :, i], clim=no2lim, c=:matter, cbar_title="Original Conc. (ppb)"),
-        heatmap(finalNO2[:, :, i], clim=no2lim, c=:matter, cbar_title="Nudged Conc. (ppb)"),
-        heatmap(originalNO2err[:, :, i], c=:RdBu, clim=errlim, cbar_title="Original Err. (ppb)"),
-        heatmap(finalNO2err[:, :, i], c=:RdBu, clim=errlim, cbar_title="Nudged Err. (ppb)"),
-        size=(800, 450)
+        heatmap(originalNO2[:, :, i], clim = no2lim, c = :matter,
+            cbar_title = "Original Conc. (ppb)"),
+        heatmap(finalNO2[:, :, i], clim = no2lim, c = :matter,
+            cbar_title = "Nudged Conc. (ppb)"),
+        heatmap(originalNO2err[:, :, i], c = :RdBu, clim = errlim,
+            cbar_title = "Original Err. (ppb)"),
+        heatmap(finalNO2err[:, :, i], c = :RdBu, clim = errlim,
+            cbar_title = "Nudged Err. (ppb)"),
+        size = (800, 450)
     )
 end
 gif(anim, fps = 5)
@@ -220,10 +247,14 @@ As you can see above, the model predictions are now closer on average to the des
 Finally, here are the final nudging factors that we learned:
 
 ```@example optimization
-bar(["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO", 
-    "CH3OOH", "ISOP", "H2O2", "HNO3"], nudge, permute=(:x, :y), size=(400, 250),
-    ylim=(-maximum(abs.(nudge)), maximum(abs.(nudge))),
-    label=:none, xlabel="Species", ylabel="Final Nudge Factors")
+bar(
+    ["O3", "OH", "HO2", "H2O", "NO", "NO2", "CH3O2", "CH2O", "CO",
+        "CH3OOH", "ISOP", "H2O2", "HNO3"],
+    nudge,
+    permute = (:x, :y),
+    size = (400, 250),
+    ylim = (-maximum(abs.(nudge)), maximum(abs.(nudge))),
+    label = :none, xlabel = "Species", ylabel = "Final Nudge Factors")
 ```
 
 This is just one example of how you can use EarthSciML for machine learning.

@@ -15,15 +15,15 @@ using ModelingToolkit, OrdinaryDiffEq, Plots, SymbolicIndexingInterface
 
 model = convert(ODESystem, couple(SuperFast(), FastJX()))
 
-prob = ODEProblem(model, (), (0,3*24*3600))
+prob = ODEProblem(model, (), (0, 3*24*3600))
 T_setter = setp(prob, [model.SuperFast₊T, model.FastJX₊T])
 
 # Create an animation of the O₃ concentration as a function of temperature.
 anim = @animate for T in 100:10:400
     T_setter(prob, (T, T))
     sol = solve(prob, Rosenbrock23())
-    plot(sol.t, sol[model.SuperFast₊O3], xlabel="Time (s)", ylim=(0, 50),
-        ylabel="O₃ Concentration (ppb)", label=:none, title="T=$T K")
+    plot(sol.t, sol[model.SuperFast₊O3], xlabel = "Time (s)", ylim = (0, 50),
+        ylabel = "O₃ Concentration (ppb)", label = :none, title = "T=$T K")
 end
 gif(anim, fps = 10)
 ```
@@ -41,7 +41,7 @@ using Statistics
 function run_simulation(u)
     T = u[1]
     p2 = remake_buffer(model, prob.p, Dict(model.SuperFast₊T => T, model.FastJX₊T => T))
-    solve(remake(prob, p=p2), Rosenbrock23())
+    solve(remake(prob, p = p2), Rosenbrock23())
 end
 loss(u) = (mean(run_simulation(u)[model.SuperFast₊O3]) - 25)^2
 
@@ -52,12 +52,12 @@ anim = @animate for i in 1:100
 
     # Make a plot of the simulation.
     sol = run_simulation(T)
-    o3avg = round(mean(sol[model.SuperFast₊O3]), digits=3)
-    plot(sol.t, sol[model.SuperFast₊O3], label=:none, ylim=(0, 35),
-        xlabel="Time (s)", ylabel="O₃ Concentration (ppb)",
-        title="Step=$i; T=$(round(T[1], digits=3)) K; O₃ avg.=$(o3avg) ppb", )
-    plot!([sol.t[begin], sol.t[end]], [o3avg, o3avg], label=:none,
-        linecolor=:black, linestyle=:dash)
+    o3avg = round(mean(sol[model.SuperFast₊O3]), digits = 3)
+    plot(sol.t, sol[model.SuperFast₊O3], label = :none, ylim = (0, 35),
+        xlabel = "Time (s)", ylabel = "O₃ Concentration (ppb)",
+        title = "Step=$i; T=$(round(T[1], digits=3)) K; O₃ avg.=$(o3avg) ppb")
+    plot!([sol.t[begin], sol.t[end]], [o3avg, o3avg], label = :none,
+        linecolor = :black, linestyle = :dash)
 
     if abs(g[1]) < 1e-2
         break
@@ -66,68 +66,80 @@ end
 gif(anim, fps = 5)
 ```
 
-
 ## Where to Start
 
-* If you'd like to know more about the available capabilities, check out our [Examples](@ref) section.
-* If you're interested in jumping right in and using the framework on your own computer, check out the [Getting Started](@ref) section.
-* If you're interested in learning about the theory behind geoscientific modeling and machine learning, check out [EarthSci EDU](@ref).
-* Finally, if you're interested in contributing to the project, check [Contributing](@ref).
-
+  - If you'd like to know more about the available capabilities, check out our [Examples](@ref) section.
+  - If you're interested in jumping right in and using the framework on your own computer, check out the [Getting Started](@ref) section.
+  - If you're interested in learning about the theory behind geoscientific modeling and machine learning, check out [EarthSci EDU](@ref).
+  - Finally, if you're interested in contributing to the project, check [Contributing](@ref).
 
 ## Reproducibility
+
 ```@raw html
 <details><summary>The documentation of this EarthSciML package was built using these direct dependencies,</summary>
 ```
+
 ```@example
 using Pkg # hide
 Pkg.status() # hide
 ```
+
 ```@raw html
 </details>
 ```
+
 ```@raw html
 <details><summary>and using this machine and Julia version.</summary>
 ```
+
 ```@example
 using InteractiveUtils # hide
 versioninfo() # hide
 ```
+
 ```@raw html
 </details>
 ```
+
 ```@raw html
 <details><summary>A more complete overview of all dependencies and their versions is also provided.</summary>
 ```
+
 ```@example
 using Pkg # hide
-Pkg.status(;mode = PKGMODE_MANIFEST) # hide
+Pkg.status(; mode = PKGMODE_MANIFEST) # hide
 ```
+
 ```@raw html
 </details>
 ```
+
 ```@raw html
 You can also download the 
 <a href="
 ```
+
 ```@eval
 using TOML
 using Markdown
-version = TOML.parse(read("../Project.toml",String))["version"]
-name = TOML.parse(read("../Project.toml",String))["name"]
+version = TOML.parse(read("../Project.toml", String))["version"]
+name = TOML.parse(read("../Project.toml", String))["name"]
 link = Markdown.MD("https://github.com/EarthSciML/"*name*"/tree/gh-pages/v"*version*"/assets/Manifest.toml")
 ```
+
 ```@raw html
 ">manifest</a> file and the
 <a href="
 ```
+
 ```@eval
 using TOML
 using Markdown
-version = TOML.parse(read("../Project.toml",String))["version"]
-name = TOML.parse(read("../Project.toml",String))["name"]
+version = TOML.parse(read("../Project.toml", String))["version"]
+name = TOML.parse(read("../Project.toml", String))["name"]
 link = Markdown.MD("https://github.com/EarthSciML/"*name*"/tree/gh-pages/v"*version*"/assets/Project.toml")
 ```
+
 ```@raw html
 ">project</a> file.
 ```
