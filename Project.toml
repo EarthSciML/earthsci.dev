@@ -32,6 +32,9 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 SymbolicIndexingInterface = "2efcf032-c050-4f8e-a9bb-153293bab1f5"
 
+[sources]
+GasChem = {url = "https://github.com/EarthSciML/GasChem.jl", rev = "main"}
+
 [compat]
 AtmosphericDeposition = "0.4"
 EarthSciData = "0.15"
