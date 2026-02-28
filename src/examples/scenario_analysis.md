@@ -26,12 +26,13 @@ dt = 300.0 # Operator splitting timestep
 
 base_model = couple(
     SuperFast(),
-    FastJX(domain),
-    #DryDepositionGas(), Not currently working
+    FastJX_interpolation_troposphere(DateTime(2016, 5, 1)),
+    DryDepositionGas(),
     WetDeposition(),
-    AdvectionOperator(dt, upwind1_stencil, ZeroGradBC()),
+    AdvectionOperator(dt, upwind1_stencil, SpeciesConstantBC(Dict("O3" => 40.0), 0.0)),
     emis,
     geosfp,
+    PBLMixingCallback(1800.0),
     domain
 )
 ```

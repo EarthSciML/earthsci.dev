@@ -38,7 +38,7 @@ using Dates
 
 chem_phot = couple(
     SuperFast(),
-    FastJX(DateTime(2016, 5, 1))
+    FastJX_interpolation_troposphere(DateTime(2016, 5, 1))
 )
 ```
 
@@ -92,7 +92,7 @@ using AtmosphericDeposition
 
 model = couple(
     SuperFast(),
-    FastJX(DateTime(2016, 5, 1)),
+    FastJX_interpolation_troposphere(DateTime(2016, 5, 1)),
     DryDepositionGas(),
     WetDeposition(),
     emis,
@@ -127,12 +127,12 @@ Finally, we also need to add our spatiotemporal domain to the model.
 using EnvironmentalTransport
 
 dt = 300.0 # Operator splitting timestep
-advection = AdvectionOperator(dt, upwind1_stencil, ZeroGradBC())
+advection = AdvectionOperator(dt, upwind1_stencil, SpeciesConstantBC(Dict("O3" => 40.0), 0.0))
 
 outfile = ("RUNNER_TEMP" ∈ keys(ENV) ? ENV["RUNNER_TEMP"] : tempname()) * "out.nc" # This is just a location to save the output.
 output = NetCDFOutputter(outfile, 3600.0) # Save output every 3600 sec. of simulation time,
 
-model_3d = couple(model, advection, output, domain)
+model_3d = couple(model, advection, output, PBLMixingCallback(1800.0), domain)
 ```
 
 ### Graph Visualization

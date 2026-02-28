@@ -14,7 +14,7 @@ using EarthSciMLBase, GasChem
 using ModelingToolkit, OrdinaryDiffEq, Plots, SymbolicIndexingInterface
 using Dates
 
-model = convert(System, couple(SuperFast(), FastJX(DateTime(2016, 5, 1))))
+model = convert(System, couple(SuperFast(), FastJX_interpolation_troposphere(DateTime(2016, 5, 1))))
 
 prob = ODEProblem(model, (), (0, 3*24*3600); build_initializeprob=false)
 T_setter = setp(prob, [model.SuperFast₊T, model.FastJX₊T])

@@ -32,12 +32,13 @@ domain = DomainInfo(
 
 model_base = couple(
     SuperFast(),
-    FastJX(domain),
-    #DryDepositionGas(), Not currently working
+    FastJX_interpolation_troposphere(DateTime(2016, 5, 1)),
+    DryDepositionGas(),
     WetDeposition(),
-    AdvectionOperator(NaN, upwind1_stencil, ZeroGradBC()),
+    AdvectionOperator(NaN, upwind1_stencil, SpeciesConstantBC(Dict("O3" => 40.0), 0.0)),
     NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain),
     GEOSFP("4x5", domain),
+    PBLMixingCallback(1800.0),
     domain
 )
 ```
