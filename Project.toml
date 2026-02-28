@@ -1,6 +1,6 @@
 name = "earthsci.dev"
-authors = ["EarthSciML authors and contributors"]
 version = "0.1.0"
+authors = ["EarthSciML authors and contributors"]
 
 [deps]
 AtmosphericDeposition = "1a52f20c-0d16-41d8-a00a-b2996d86a462"
@@ -35,6 +35,6 @@ SymbolicIndexingInterface = "2efcf032-c050-4f8e-a9bb-153293bab1f5"
 [compat]
 EarthSciData = "0.12"
 EarthSciMLBase = "0.21"
-EnvironmentalTransport = "0.5.1"
+EnvironmentalTransport = "0.5.1, 0.7"
 GasChem = "0.9"
 ProgressLogging = "0.1"
