@@ -28,11 +28,6 @@ jobs:
         shell: julia --project=. --color=yes {0}
         run: |
           using Pkg
-          Pkg.develop(url="https://github.com/EarthSciML/GasChem.jl")
-          # Bump GasChem version to match AtmosphericDeposition compat
-          gcpath = joinpath(Pkg.devdir(), "GasChem", "Project.toml")
-          txt = read(gcpath, String)
-          write(gcpath, replace(txt, r"version = \"0\.\d+\.\d+\"" => "version = \"0.12.0\""))
           Pkg.instantiate()
       - name: Build and deploy
         env:
