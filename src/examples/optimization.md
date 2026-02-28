@@ -28,17 +28,16 @@ domain = DomainInfo(
     DateTime(2016, 5, 1, 4);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2.0):deg2rad(53.7),
-    levrange = 1:7,
-    dtype = Float64)
+    levrange = 1:7)
 
 model_base = couple(
     SuperFast(),
-    FastJX(),
-    #DrydepositionG(), Not currently working
-    Wetdeposition(),
+    FastJX(domain),
+    #DryDepositionGas(), Not currently working
+    WetDeposition(),
     AdvectionOperator(NaN, upwind1_stencil, ZeroGradBC()),
     NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain),
-    GEOSFP("0.5x0.625_NA", domain),
+    GEOSFP("4x5", domain),
     domain
 )
 ```
@@ -49,6 +48,8 @@ It gets slightly complicated, but what we want to do is to add a new term to eac
 For more information about the specifics of what we're doing here, you can refer to the documentation about [creating and composing model components](https://base.earthsci.dev/dev/composition/) for more information.
 
 ```@example optimization
+using EarthSciMLBase: CoupleType
+
 struct NudgeCoupler
     sys
 end
@@ -66,8 +67,8 @@ function Nudge(; name = :nudge)
                 unit = u"s^-1", description = "Nudge constant for species $i"]))
     end
     eqs = vars .~ params
-    ODESystem(eqs, t, [vars...], [params...]; name = name,
-        metadata = Dict(:coupletype => NudgeCoupler))
+    System(eqs, t, [vars...], [params...]; name = name,
+        metadata = Dict(CoupleType => NudgeCoupler))
 end
 
 function EarthSciMLBase.couple2(c::GasChem.SuperFastCoupler, n::NudgeCoupler)
@@ -98,7 +99,7 @@ Once we've created our nudging model component and coupled it into our base mode
 Before we do that, though, we need to get a few preliminaries out of the way, including extracting the nudging parameters from our model so that we can use them later and figuring out the location in the model results where the NO2 concentration is going to be stored, as that is the output that we're interested in adjusting.
 
 ```@example optimization
-model_sys = convert(ODESystem, model)
+model_sys = convert(System, model; compile=false)
 model_sys, = EarthSciMLBase._prepare_coord_sys(model_sys, domain)
 nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge_c, i),
                                           Symbol.(parameters(model_sys)))) for i in 1:13]]

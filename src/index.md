@@ -12,10 +12,11 @@ Below, we demonstrate this by coupling a model of gas-phase atmospheric chemistr
 ```@example index
 using EarthSciMLBase, GasChem
 using ModelingToolkit, OrdinaryDiffEq, Plots, SymbolicIndexingInterface
+using Dates
 
-model = convert(ODESystem, couple(SuperFast(), FastJX()))
+model = convert(System, couple(SuperFast(), FastJX(DateTime(2016, 5, 1))))
 
-prob = ODEProblem(model, (), (0, 3*24*3600))
+prob = ODEProblem(model, (), (0, 3*24*3600); build_initializeprob=false)
 T_setter = setp(prob, [model.SuperFast₊T, model.FastJX₊T])
 
 # Create an animation of the O₃ concentration as a function of temperature.

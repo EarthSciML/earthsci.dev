@@ -5,7 +5,7 @@ EarthSciML is designed to streamline this process in the case of geoscientific m
 
 ## Model Components
 
-EarthSciML model components are ModelingToolkit `ODESystems` which contain metadata which specifies how each component should be coupled to other components.
+EarthSciML model components are ModelingToolkit `System`s which contain metadata which specifies how each component should be coupled to other components.
 
 So, for example, we can create an instance of the [SuperFast](https://gaschem.earthsci.dev/stable/superfast/) gas-phase chemistry model model from the [GasChem](https://gaschem.earthsci.dev/stable/) package like this:
 
@@ -15,12 +15,12 @@ using GasChem
 chem = SuperFast()
 ```
 
-It's just an ODESystem, so we can run it like any other ModelingToolkit model:
+It's just a System, so we can run it like any other ModelingToolkit model:
 
 ```@example using_earthsciml
 using ModelingToolkit, OrdinaryDiffEq, Plots
 
-sol = solve(ODEProblem(structural_simplify(chem)), tspan = (0, 2*3600))
+sol = solve(ODEProblem(mtkcompile(chem), [], (0.0, 2*3600.0)), Rosenbrock23())
 
 plot(sol, legend = :topright, xlabel = "Time (s)", ylabel = "Concentration (ppb)",
     title = "SuperFast Chemistry")
@@ -34,18 +34,19 @@ This allows us to use the `EarthSciMLBase.couple` function to couple model compo
 
 ```@example using_earthsciml
 using EarthSciMLBase
+using Dates
 
 chem_phot = couple(
     SuperFast(),
-    FastJX()
+    FastJX(DateTime(2016, 5, 1))
 )
 ```
 
 The above example couples the SuperFast with the [Fast-JX](https://gaschem.earthsci.dev/stable/api/#GasChem.FastJX-Tuple%7B%7D) photolysis model, and when we run them together as a coupled model, we can see a characteristic diurnal cycle in the O₃ concentration, were concentrations are lower at night and higher during the day owing to photochemistry:
 
 ```@example using_earthsciml
-chem_phot_sys = convert(ODESystem, chem_phot)
-sol = solve(ODEProblem(chem_phot_sys), tspan = (0, 3*24*3600))
+chem_phot_sys = convert(System, chem_phot)
+sol = solve(ODEProblem(chem_phot_sys, [], (0.0, 3*24*3600.0); build_initializeprob=false), Rosenbrock23())
 
 plot(sol.t, sol[chem_phot_sys.SuperFast₊O3], legend = :topright, xlabel = "Time (s)",
     ylabel = "O₃ Concentration (ppb)", label = :none,
@@ -66,18 +67,15 @@ domain = DomainInfo(
     DateTime(2016, 5, 2);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
-    levrange = 1:15,
-    dtype = Float64)
+    levrange = 1:15)
 
 emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream = false)
-emis = EarthSciMLBase.copy_with_change(emis, discrete_events = []) # Workaround for bug.
 
 equations(emis)[1:5]
 ```
 
 ```@example using_earthsciml
-geosfp = GEOSFP("0.5x0.625_NA", domain; stream = false)
-geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events = []) # Workaround for bug.
+geosfp = GEOSFP("4x5", domain; stream = false)
 
 equations(geosfp)[1:5]
 ```
@@ -94,9 +92,9 @@ using AtmosphericDeposition
 
 model = couple(
     SuperFast(),
-    FastJX(),
-    DrydepositionG(),
-    Wetdeposition(),
+    FastJX(DateTime(2016, 5, 1)),
+    DryDepositionGas(),
+    WetDeposition(),
     emis,
     geosfp
 )
@@ -108,9 +106,8 @@ Once we specify our model, we can try running it in a zero-dimensional "box mode
 This can allow us study the dynamics or diagnose any programs without using a lot of computing power.
 
 ```@example using_earthsciml
-model_sys = convert(ODESystem, model)
-sol = solve(ODEProblem(model_sys, jac = true), Rosenbrock23(),
-    tspan = get_tspan(domain))
+model_sys = convert(System, model)
+sol = solve(ODEProblem(model_sys, [], get_tspan(domain); build_initializeprob=false), Rosenbrock23())
 
 plot(unix2datetime.(sol.t), sol[model_sys.SuperFast₊O3],
     ylabel = "O₃ Concentration (ppb)",
@@ -172,8 +169,8 @@ We also specify some options in `solve` show a progress bar (because this simula
 ```@example using_earthsciml
 using DiffEqCallbacks
 
-st = SolverStrangSerial(Rosenbrock23(), dt,
-    callback = PositiveDomain(save = false), jac = true)
+st = SolverStrangSerial(Rosenbrock23(), dt;
+    callback = PositiveDomain(save = false))
 
 prob = ODEProblem(model_3d, st)
 

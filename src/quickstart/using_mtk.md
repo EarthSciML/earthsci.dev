@@ -90,15 +90,15 @@ Overall, we have specified that `A` decreases and `B` increases at the rate of `
 ## Running an ODE Simulation
 
 Now that we have defined our system of equations, we can run a simulation.
-First, we set up an [`ODESystem`](https://docs.sciml.ai/ModelingToolkit/stable/systems/ODESystem/), which is a ModelingToolkit object that represents a system of ODEs.
+First, we set up a [`System`](https://docs.sciml.ai/ModelingToolkit/stable/), which is a ModelingToolkit object that represents a system of ODEs.
 
 ```@example using_mtk
-@named sys = ODESystem(eqs, t, [A, B], [T])
+@named sys = System(eqs, t)
 ```
 
 Again, there's several parts here, but starting from the left:
 `@named sys` is saying the both the name of the model and the name of the variable we're assigning it to is `sys`.
-Then, `ODESystem(eqs, t, [A, B], [T])` is creating a new `ODESystem` object, where `eqs` is the list of equations we defined earlier, `t` is the time variable, `[A, B]` is the list of variables, and `[T]` is the list of parameters.
+Then, `System(eqs, t)` is creating a new `System` object, where `eqs` is the list of equations we defined earlier and `t` is the time variable. ModelingToolkit automatically determines the variables and parameters from the equations.
 
 Now, almost we're ready to run our simulation.
 First we need the [`OrdinaryDiffEq`](https://diffeq.sciml.ai/stable/) package, which provides the differential equation solvers we need to solve our ODE system.
@@ -108,16 +108,16 @@ using OrdinaryDiffEq
 ```
 
 Now, we do just a few more things:
-first, we run the [`structural_simplify`](https://docs.sciml.ai/ModelingToolkit/dev/basics/Composition/#Structural-Simplify) function on our system, which checks if there are any manipulations that can be made to our equation system to make it easier to solve (there aren't any in this case).
-Then, we create an [`ODEProblem`](https://docs.sciml.ai/ModelingToolkit/dev/systems/ODESystem/#SciMLBase.ODEProblem-Tuple%7BModelingToolkit.AbstractODESystem,%20Vararg%7BAny%7D%7D) from our ODESystem.
-`ODEProblem`s are structures are can directly be solved.
+first, we run the [`mtkcompile`](https://docs.sciml.ai/ModelingToolkit/dev/) function on our system, which checks if there are any manipulations that can be made to our equation system to make it easier to solve (there aren't any in this case), and compiles it for efficient simulation.
+Then, we create an [`ODEProblem`](https://docs.sciml.ai/ModelingToolkit/dev/) from our compiled System.
+`ODEProblem`s are structures that can directly be solved.
+We specify the time span `(0, 10)` to run the simulation from 0 to 10 seconds.
 Then, we finally can call the [`solve`](https://diffeq.sciml.ai/stable/basics/common_solver_opts/#Solving-the-Problem) function to get the result of our simulation, which we save in the `sol` variable.
-When we call the `solve` function, we include the `tspan=(0,10)` argument, which specifies that we want to run the simulation with the start time of 0 seconds and the end time of 10 seconds.
 
 ```@example using_mtk
-sys_simplified = structural_simplify(sys)
-prob = ODEProblem(sys_simplified)
-sol = solve(prob, Tsit5(), tspan = (0, 10))
+sys_compiled = mtkcompile(sys)
+prob = ODEProblem(sys_compiled, [], (0.0, 10.0))
+sol = solve(prob, Tsit5())
 ```
 
 The result of the simulation is shown above.
@@ -141,7 +141,7 @@ We can also re-run the simulation with different values of the parameters or dif
 For example, in the code below, we increase the initial concentration of `A` to 1.5 and decrease the temperature to 100 K:
 
 ```@example using_mtk
-prob2 = ODEProblem(sys_simplified, [A=>1.5], (0, 10), [T=>100])
+prob2 = ODEProblem(sys_compiled, [A=>1.5], (0, 10), [T=>100])
 sol2 = solve(prob2, Tsit5())
 
 plot(
@@ -203,10 +203,9 @@ Now we can re-create our equation system from above, but this time we will add t
 Because units and partial differential equations don't currently work together in ModelingToolkit, we will also recreate our variables, parameters, and constants without units.
 
 ```@example using_mtk
-@parameters T=293.15 x y
+@parameters T=293.15 x y k=0.1 T_0=300.0
 t_ = ModelingToolkit.t_nounits # We want the time variable without units now.
 D_ = ModelingToolkit.D_nounits # We want the differential operator without units now.
-@constants k=0.1 T_0=300.0
 @variables A(..) B(..)
 Dx = Differential(x)
 Dy = Differential(y)
@@ -244,7 +243,7 @@ bcs = [A(x, y, t_min) ~ 0.0,
 Now we can create our `PDESystem`, which is similar to an `ODESystem` but for PDEs.
 
 ```@example using_mtk
-@named pdesys = PDESystem(eqs, bcs, domain, [x, y, t], [A(x, y, t), B(x, y, t)], [T])
+@named pdesys = PDESystem(eqs, bcs, domain, [x, y, t_], [A(x, y, t_), B(x, y, t_)], [T, k, T_0])
 ```
 
 One additional difference with PDE systems is that we need to [discretize](https://docs.sciml.ai/MethodOfLines/stable/api/discretization/) them to convert them to an ODE system that we can solve.
