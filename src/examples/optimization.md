@@ -131,7 +131,8 @@ end
 Since there are 13 chemical species in our model, we have 13 nudging factors, so we can run the `loss` function with a vector of 13 zeros to see what the loss is with no nudging factors applied.
 
 ```@example optimization
-# Debug: Check t_ref parameter values
+# Debug: Check t_ref parameter values and prob.p
+debug_info = String[]
 for p in parameters(model_sys)
     pname = string(Symbol(p))
     if occursin("t_ref", pname)
@@ -140,11 +141,19 @@ for p in parameters(model_sys)
         icval = hasic ? ics[p] : "NOT IN ICS"
         hasdef = ModelingToolkit.hasdefault(p)
         defval = hasdef ? ModelingToolkit.getdefault(p) : "NO DEFAULT"
-        @info "Parameter $pname: initial_condition=$icval, default=$defval"
+        push!(debug_info, "Parameter $pname: initial_condition=$icval, default=$defval")
     end
 end
-# Debug: Check prob.p tunable values
-@info "prob.p tunable: $(prob.p.tunable)"
+push!(debug_info, "prob.p.tunable length: $(length(prob.p.tunable))")
+push!(debug_info, "prob.p.tunable: $(prob.p.tunable)")
+# Also check nonnumeric buffers for ITPWrapper objects
+for (i, buf) in enumerate(prob.p.nonnumeric)
+    push!(debug_info, "prob.p.nonnumeric[$i] types: $(typeof.(buf))")
+end
+for (i, buf) in enumerate(prob.p.constant)
+    push!(debug_info, "prob.p.constant[$i] length=$(length(buf)), values=$(buf)")
+end
+error("DEBUG OUTPUT:\n" * join(debug_info, "\n"))
 loss(zeros(13))
 ```
 
