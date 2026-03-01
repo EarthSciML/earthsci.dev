@@ -100,7 +100,7 @@ Once we've created our nudging model component and coupled it into our base mode
 Before we do that, though, we need to get a few preliminaries out of the way, including extracting the nudging parameters from our model so that we can use them later and figuring out the location in the model results where the NO2 concentration is going to be stored, as that is the output that we're interested in adjusting.
 
 ```@example optimization
-model_sys = convert(System, model; compile=false)
+model_sys = convert(System, model)
 model_sys, = EarthSciMLBase._prepare_coord_sys(model_sys, domain)
 nudge_params = parameters(model_sys)[[only(findall((x)->x==Symbol(:nudge₊nudge_c, i),
                                           Symbol.(parameters(model_sys)))) for i in 1:13]]
@@ -131,29 +131,6 @@ end
 Since there are 13 chemical species in our model, we have 13 nudging factors, so we can run the `loss` function with a vector of 13 zeros to see what the loss is with no nudging factors applied.
 
 ```@example optimization
-# Debug: Check t_ref parameter values and prob.p
-debug_info = String[]
-for p in parameters(model_sys)
-    pname = string(Symbol(p))
-    if occursin("t_ref", pname)
-        ics = ModelingToolkit.initial_conditions(model_sys)
-        hasic = haskey(ics, p)
-        icval = hasic ? ics[p] : "NOT IN ICS"
-        hasdef = ModelingToolkit.hasdefault(p)
-        defval = hasdef ? ModelingToolkit.getdefault(p) : "NO DEFAULT"
-        push!(debug_info, "Parameter $pname: initial_condition=$icval, default=$defval")
-    end
-end
-push!(debug_info, "prob.p.tunable length: $(length(prob.p.tunable))")
-push!(debug_info, "prob.p.tunable: $(prob.p.tunable)")
-# Also check nonnumeric buffers for ITPWrapper objects
-for (i, buf) in enumerate(prob.p.nonnumeric)
-    push!(debug_info, "prob.p.nonnumeric[$i] types: $(typeof.(buf))")
-end
-for (i, buf) in enumerate(prob.p.constant)
-    push!(debug_info, "prob.p.constant[$i] length=$(length(buf)), values=$(buf)")
-end
-error("DEBUG OUTPUT:\n" * join(debug_info, "\n"))
 loss(zeros(13))
 ```
 
