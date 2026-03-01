@@ -39,7 +39,7 @@ GasChem = {url = "https://github.com/EarthSciML/GasChem.jl", rev = "main"}
 
 [compat]
 AtmosphericDeposition = "0.4"
-EarthSciData = "0.15"
+EarthSciData = "0.15.1"
 EarthSciMLBase = "0.25"
 EnvironmentalTransport = "0.7"
 GasChem = "0.11"
