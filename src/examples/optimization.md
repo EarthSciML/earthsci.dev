@@ -131,6 +131,20 @@ end
 Since there are 13 chemical species in our model, we have 13 nudging factors, so we can run the `loss` function with a vector of 13 zeros to see what the loss is with no nudging factors applied.
 
 ```@example optimization
+# Debug: Check t_ref parameter values
+for p in parameters(model_sys)
+    pname = string(Symbol(p))
+    if occursin("t_ref", pname)
+        ics = ModelingToolkit.initial_conditions(model_sys)
+        hasic = haskey(ics, p)
+        icval = hasic ? ics[p] : "NOT IN ICS"
+        hasdef = ModelingToolkit.hasdefault(p)
+        defval = hasdef ? ModelingToolkit.getdefault(p) : "NO DEFAULT"
+        @info "Parameter $pname: initial_condition=$icval, default=$defval"
+    end
+end
+# Debug: Check prob.p tunable values
+@info "prob.p tunable: $(prob.p.tunable)"
 loss(zeros(13))
 ```
 
