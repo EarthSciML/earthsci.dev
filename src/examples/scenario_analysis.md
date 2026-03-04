@@ -16,25 +16,23 @@ domain = DomainInfo(
     DateTime(2016, 5, 2);
     lonrange = deg2rad(-115):deg2rad(2.5):deg2rad(-68.75),
     latrange = deg2rad(25):deg2rad(2):deg2rad(53.7),
-    levrange = 1:15,
-    dtype = Float64)
+    levrange = 1:15)
 
-geosfp = GEOSFP("0.5x0.625_NA", domain; stream = false)
-geosfp = EarthSciMLBase.copy_with_change(geosfp, discrete_events = []) # Workaround for bug.
+geosfp = GEOSFP("4x5", domain; stream = false)
 
 emis = NEI2016MonthlyEmis("mrggrid_withbeis_withrwc", domain; stream = false)
-emis = EarthSciMLBase.copy_with_change(emis, discrete_events = []) # Workaround for bug.
 
 dt = 300.0 # Operator splitting timestep
 
 base_model = couple(
     SuperFast(),
-    FastJX(),
-    #DrydepositionG(), Not currently working
-    Wetdeposition(),
-    AdvectionOperator(dt, upwind1_stencil, ZeroGradBC()),
+    FastJX_interpolation_troposphere(DateTime(2016, 5, 1)),
+    DryDepositionGas(),
+    WetDeposition(),
+    AdvectionOperator(dt, upwind1_stencil, SpeciesConstantBC(Dict("O3" => 40.0), 0.0)),
     emis,
     geosfp,
+    PBLMixingCallback(1800.0),
     domain
 )
 ```
@@ -54,7 +52,6 @@ We also create a component that writes the model output to a file called `scenar
 
 ```@example scenario_analysis
 @named scenario_emis = NEI2016MonthlyEmis("onroad", domain; scale = -0.3, stream = false)
-scenario_emis = EarthSciMLBase.copy_with_change(scenario_emis, discrete_events = []) # Workaround for bug.
 
 scenario_outfile = ("RUNNER_TEMP" ∈ keys(ENV) ? ENV["RUNNER_TEMP"] : tempname()) *
                    "scenario_output.nc"
