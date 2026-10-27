@@ -720,6 +720,26 @@ def root_entries(doc: Doc) -> dict[str, list[tuple[dict, dict]]]:
             out.setdefault(use["name"], []).append((item, target, use.get("id")))
         else:
             out.setdefault(item["name"], []).append((item, item, item_id))
+    # Items of public modules are addressable as `module::name` (nested:
+    # `a::b::name`), for crates whose API lives in modules rather than at the root.
+    def walk(module, prefix):
+        for mid in module["inner"]["module"]["items"]:
+            m = doc.item(mid)
+            if m is None:
+                continue
+            k = kind_of(m)
+            if k == "module":
+                if m.get("visibility") == "public":
+                    walk(m, prefix + (m["name"],))
+            elif k in ("use", "import"):
+                continue
+            elif m.get("name") and m.get("visibility") == "public":
+                out.setdefault("::".join(prefix + (m["name"],)), []).append((m, m, mid))
+
+    for mid in root["inner"]["module"]["items"]:
+        m = doc.item(mid)
+        if m is not None and kind_of(m) == "module" and m.get("visibility") == "public":
+            walk(m, (m["name"],))
     return out
 
 
@@ -818,7 +838,15 @@ def main() -> int:
             file=sys.stderr,
         )
     manifest = json.loads(args.manifest.read_text())
-    version = re.search(r'^version\s*=\s*"([^"]+)"', args.cargo_toml.read_text(), re.M).group(1)
+    version_re = re.compile(r'^version\s*=\s*"([^"]+)"', re.M)
+    version = version_re.search(args.cargo_toml.read_text())
+    # `version.workspace = true`: the version is in the workspace root's Cargo.toml.
+    parent = args.cargo_toml.resolve().parent
+    while version is None and parent != parent.parent:
+        parent = parent.parent
+        if (parent / "Cargo.toml").is_file():
+            version = version_re.search((parent / "Cargo.toml").read_text())
+    version = version.group(1) if version else "unknown"
 
     spellings = []
     for sym in manifest["symbols"]:
@@ -848,8 +876,9 @@ def main() -> int:
             )
             missing_docs.append((tier, canonical, spelling, "not found"))
             continue
-        sigs = [declaration(doc, target, spelling)] + inherent_methods(doc, target, spelling)
-        body = convert_doc(doc, target.get("docs"), target.get("links"), spelling)
+        short = spelling.rsplit("::", 1)[-1]
+        sigs = [declaration(doc, target, short)] + inherent_methods(doc, target, short)
+        body = convert_doc(doc, target.get("docs"), target.get("links"), short)
         # A re-export can carry its own doc comment; append it when present.
         if root_item is not target and root_item.get("docs"):
             extra = convert_doc(doc, root_item["docs"], root_item.get("links"), spelling)
@@ -871,7 +900,7 @@ def main() -> int:
                 "signatures": sigs,
                 "doc": body,
                 "source": source,
-                "native_url": native_url(doc, root_item, target, tid, spelling, pub_mods),
+                "native_url": native_url(doc, root_item, target, tid, short, pub_mods),
             }
         )
 

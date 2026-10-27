@@ -76,6 +76,7 @@ are extracted, rendered and checked. Per-binding keys:
 | | `src` | source dir relative to `path` (default `src`) |
 | rust | `crate` | package name |
 | | `features` | features enabled for rustdoc, list |
+| | (spellings) | in the manifest, a spelling is a root export (`load_path`) or an item of a public module written `module::name` (`toy::toy_problem`); a crate inside a workspace is documented through its own directory (its `Cargo.lock` is found at the workspace root) |
 | | `docs_rs`, `docs_rs_features` | docs.rs root URL (default `https://docs.rs/<crate>/latest/`) and the features it builds with |
 | | `nightly` | pinned nightly for rustdoc JSON (default `nightly-2026-10-01`) |
 | go | `package` | import path of the package documented (`path` is its directory) |

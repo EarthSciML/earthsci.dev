@@ -125,7 +125,12 @@ examples() {
     # The crate's own lock file pins the examples' dependencies, so a
     # dependency change in the crate never leaves a second lock file stale.
     # Cargo then adds only the examples package itself (the copy is gitignored).
-    cp "$CRATE_DIR/Cargo.lock" "$dir/Cargo.lock"
+    # A crate inside a workspace has its lock file at the workspace root, so
+    # look upward from the crate directory.
+    local lock="$CRATE_DIR" ; lock="${lock%/}"
+    while [[ ! -f "$lock/Cargo.lock" && "$lock" == */* ]]; do lock="${lock%/*}"; done
+    [[ -f "$lock/Cargo.lock" ]] || { echo "rust.sh: no Cargo.lock at or above $CRATE_DIR" >&2; exit 1; }
+    cp "$lock/Cargo.lock" "$dir/Cargo.lock"
     CARGO_TARGET_DIR="$target" $cargo build --manifest-path "$dir/Cargo.toml" --examples
 
     # Run from an unrelated directory: the examples find their fixtures
