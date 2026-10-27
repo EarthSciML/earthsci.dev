@@ -4,8 +4,15 @@
 A bundle is a directory
 
     bundle.json   id, title, description, repo, nav, sha
-    content/      the repo's Hugo content tree (including generated/ pages)
+    content/      the repo's Hugo content tree (including generated/ pages,
+                  but not the API reference)
     static/       the repo's static assets (optional)
+    api/<ver>/    the rendered API reference (content/generated/api) for one
+                  version: `dev` for main, `vX.Y.Z` for a release tag
+
+A tag build (--version vX.Y.Z) carries only api/<ver>/ and bundle.json: the
+narrative docs always come from main. tools/publish.py merges a bundle into the
+`docs-bundle` branch, which keeps every version's API tree (tools/versions.py).
 
 which the docs-bundle action pushes to the `docs-bundle` branch of the source
 repo and tools/assemble.py later copies into the site.
@@ -22,6 +29,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import versions  # noqa: E402
 
 try:
     import tomllib
@@ -64,7 +74,9 @@ def git_sha(repo_root: Path) -> str:
         return os.environ.get("GITHUB_SHA", "")
 
 
-def build_bundle(repo_root: Path, out: Path) -> dict:
+def build_bundle(repo_root: Path, out: Path, version: str = versions.DEV) -> dict:
+    if not versions.is_version(version):
+        raise BundleError(f"--version {version!r} must be `dev` or a vX.Y.Z tag")
     repo_root = repo_root.resolve()
     cfg = load_site_toml(repo_root)
     content = repo_root / cfg.get("content", "docs/content")
@@ -78,16 +90,21 @@ def build_bundle(repo_root: Path, out: Path) -> dict:
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    shutil.copytree(content, out / "content", ignore=IGNORED)
-    if static.is_dir():
-        shutil.copytree(static, out / "static", ignore=IGNORED)
+    generated_api = content / "generated" / "api"
+    has_api = (generated_api / "_index.md").is_file()
+    if version == versions.DEV:
+        shutil.copytree(content, out / "content",
+                        ignore=lambda d, names: set(IGNORED(d, names)) | (
+                            {"api"} if Path(d) == content / "generated" else set()))
+        if static.is_dir():
+            shutil.copytree(static, out / "static", ignore=IGNORED)
+    if has_api:
+        shutil.copytree(generated_api, out / "api" / version, ignore=IGNORED)
 
     nav = [dict(n) for n in cfg.get("nav", [])]
-    if (out / "content" / "generated" / "api" / "_index.md").is_file() and not any(
-        n["path"].strip("/") == "generated/api" for n in nav
-    ):
+    if has_api and not any(n["path"].strip("/") == "generated/api" for n in nav):
         nav.append({"title": "API", "path": "generated/api/"})
-    elif (repo_root / "docs" / "api" / "config.toml").is_file():
+    elif not has_api and (repo_root / "docs" / "api" / "config.toml").is_file():
         print("bundle.py: warning: docs/api/config.toml exists but no generated "
               "API reference was found; run tools/api_docs/render.py first",
               file=sys.stderr)
@@ -99,6 +116,7 @@ def build_bundle(repo_root: Path, out: Path) -> dict:
         "repo": cfg["repo"],
         "nav": nav,
         "sha": git_sha(repo_root),
+        "version": version,
     }
     (out / "bundle.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
     return meta
@@ -108,13 +126,15 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--repo-root", type=Path, default=Path("."))
     ap.add_argument("--out", type=Path, default=Path("build/bundle"))
+    ap.add_argument("--version", default=versions.DEV,
+                    help="`dev` (the default) or a release tag vX.Y.Z")
     args = ap.parse_args(argv)
     try:
-        meta = build_bundle(args.repo_root, args.out)
+        meta = build_bundle(args.repo_root, args.out, args.version)
     except BundleError as e:
         print(f"bundle.py: {e}", file=sys.stderr)
         return 1
-    print(f"bundle.py: bundled {meta['id']} ({meta['repo']}) -> {args.out}")
+    print(f"bundle.py: bundled {meta['id']} {args.version} ({meta['repo']}) -> {args.out}")
     return 0
 
 

@@ -19,6 +19,7 @@ follows.
 | `hugo.toml`, `layouts/`, `static/css/` | The shared theme |
 | `projects.toml` | The projects in the site |
 | `tools/assemble.py`, `tools/bundle.py` | Bundle fetching/assembly and bundle building (tests in `tests/`) |
+| `tools/publish.py`, `tools/versions.py` | Merging a bundle into a repo's `docs-bundle` branch; API version ordering and pruning (`DESIGN.md`, "Versions") |
 | `tools/api_docs/` | Generalized API-reference extraction and rendering |
 | `.github/actions/` | Composite actions source repos use (`api-extract`, `docs-bundle`) |
 | `.github/workflows/site.yml` | Site build and deploy |
@@ -38,7 +39,14 @@ in its `docs/site.toml`):
 
 ```bash
 python3 tools/bundle.py --repo-root /path/to/repo --out build/bundles/<id>
+python3 tools/bundle.py --repo-root /path/to/repo --out build/bundles/<id>-v1 --version v1.0.0   # a release's API tree only
+python3 tools/publish.py --bundle build/bundles/<id>-v1 --version v1.0.0 --existing build/bundles/<id>-merged   # merge locally (no push)
 ```
+
+The API reference is versioned (`dev`, `latest`, `vX.Y.Z`); see `DESIGN.md`,
+"Versions". To preview several versions, merge a `dev` bundle and one or more
+tag bundles into one directory with `publish.py --existing`, and pass that
+directory to `assemble.py --local`.
 
 Python 3.11+ is needed (`tomllib`); on older versions `pip install tomli`.
 

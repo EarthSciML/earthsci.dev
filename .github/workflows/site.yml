@@ -43,11 +43,12 @@ jobs:
         env:
           PAYLOAD_REPO: ${{ github.event.client_payload.repo }}
           PAYLOAD_SHA: ${{ github.event.client_payload.sha }}
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
         run: |
           {
             echo "### Site build"
             if [[ "$GITHUB_EVENT_NAME" == "repository_dispatch" ]]; then
-              echo "Triggered by docs update in **${PAYLOAD_REPO}** at \`${PAYLOAD_SHA:0:8}\`."
+              echo "Triggered by docs update in **${PAYLOAD_REPO}** at \`${PAYLOAD_SHA:0:8}\`${PAYLOAD_VERSION:+ (API version \`${PAYLOAD_VERSION}\`)}."
             else
               echo "Triggered by \`${GITHUB_EVENT_NAME}\` on this repository."
             fi

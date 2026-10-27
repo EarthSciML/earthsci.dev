@@ -1,5 +1,6 @@
 {{ define "main" }}
-<article class="page" data-pagefind-body>
+{{ $apiv := partial "api-version-info.html" . }}
+<article class="page"{{ if $apiv.indexed }} data-pagefind-body{{ else }} data-pagefind-ignore{{ end }}>
   <header>
     <h1>{{ .Title }}</h1>
     {{ with .Params.description }}<p class="lede">{{ . }}</p>{{ end }}

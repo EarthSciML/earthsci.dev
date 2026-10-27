@@ -1,7 +1,8 @@
 name: Build and publish docs bundle
 description: >-
   Render the API reference (if the repo has docs/api/config.toml), build this
-  repo's docs bundle, and, on a push to the default branch, publish it to the
+  repo's docs bundle, and, on a push to the default branch (version `dev`) or
+  of a release tag vX.Y.Z (that version's API reference), merge it into the
   `docs-bundle` branch and tell EarthSciML/earthsci.dev to rebuild the site.
   Run after checkout, any prebuild steps (docs/site.toml `prebuild`), and
   actions/download-artifact for the api-docs-* artifacts. See DESIGN.md in
@@ -15,13 +16,23 @@ inputs:
   publish:
     description: >-
       Push the bundle branch and dispatch. `auto` publishes only on a push to
-      the default branch; `true`/`false` force it.
+      the default branch or of a v* tag; `true`/`false` force it.
     required: false
     default: auto
   strict:
     description: Pass --strict to render.py (warnings fail the build).
     required: false
     default: 'false'
+  version:
+    description: >-
+      The API-reference version this run documents: `dev` or a tag vX.Y.Z.
+      `auto` is the tag name on a tag push and `dev` otherwise.
+    required: false
+    default: auto
+  max-minor-versions:
+    description: Keep the newest patch of this many minor series on the docs-bundle branch (0 = all).
+    required: false
+    default: '8'
   site-repo:
     description: The site repository to notify.
     required: false
@@ -51,24 +62,38 @@ runs:
           echo "no docs/api/config.toml; skipping API reference"
         fi
 
-    - name: Build bundle
-      shell: bash
-      run: python "$GITHUB_ACTION_PATH/../../../tools/bundle.py" --repo-root . --out "$RUNNER_TEMP/docs-bundle"
-
-    - name: Decide whether to publish
+    - name: Decide version and whether to publish
       id: decide
       shell: bash
       env:
         PUBLISH: ${{ inputs.publish }}
+        VERSION: ${{ inputs.version }}
         DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       run: |
+        version="$VERSION"
+        if [[ "$version" == "auto" ]]; then
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then version="${GITHUB_REF_NAME}"; else version=dev; fi
+        fi
+        if [[ "$version" != dev && ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+          echo "::notice::tag ${version} is not vX.Y.Z; not publishing docs for it"
+          echo "publish=false" >> "$GITHUB_OUTPUT"
+          echo "version=dev" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
         publish=false
         if [[ "$PUBLISH" == "true" ]]; then
           publish=true
-        elif [[ "$PUBLISH" == "auto" && "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/$DEFAULT_BRANCH" ]]; then
-          publish=true
+        elif [[ "$PUBLISH" == "auto" && "$GITHUB_EVENT_NAME" == "push" ]]; then
+          if [[ "$version" != dev || "$GITHUB_REF" == "refs/heads/$DEFAULT_BRANCH" ]]; then publish=true; fi
         fi
         echo "publish=$publish" >> "$GITHUB_OUTPUT"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Build bundle
+      shell: bash
+      env:
+        VERSION: ${{ steps.decide.outputs.version }}
+      run: python "$GITHUB_ACTION_PATH/../../../tools/bundle.py" --repo-root . --out "$RUNNER_TEMP/docs-bundle" --version "$VERSION"
 
     - name: Upload bundle (inspection / PR validation)
       if: steps.decide.outputs.publish != 'true'
@@ -78,25 +103,24 @@ runs:
         path: ${{ runner.temp }}/docs-bundle
         retention-days: 3
 
-    # The bundle goes to an orphan branch of the source repo itself, using the
-    # job's own token (the job needs `contents: write`). The site build then
-    # fetches this branch from every project, so it never depends on which
-    # repo triggered it.
+    # The bundle is merged into the orphan `docs-bundle` branch of the source
+    # repo itself (tools/publish.py), using the job's own token (the job needs
+    # `contents: write`). The branch keeps one rendered API tree per version, so
+    # a tag build adds its version and leaves main's content and the other
+    # versions alone. The site build fetches this branch from every project, so
+    # it never depends on which repo triggered it.
     - name: Publish docs-bundle branch
       if: steps.decide.outputs.publish == 'true'
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
         REPO: ${{ github.repository }}
+        VERSION: ${{ steps.decide.outputs.version }}
+        MAX_MINOR: ${{ inputs.max-minor-versions }}
       run: |
-        set -euo pipefail
-        cd "$RUNNER_TEMP/docs-bundle"
-        git init -q -b docs-bundle .
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add -A
-        git commit -q -m "docs bundle for ${GITHUB_SHA}"
-        git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" docs-bundle:docs-bundle
+        python "$GITHUB_ACTION_PATH/../../../tools/publish.py" \
+          --bundle "$RUNNER_TEMP/docs-bundle" --version "$VERSION" --repo "$REPO" \
+          --max-minor-versions "$MAX_MINOR" --message "docs bundle: ${VERSION} (${GITHUB_SHA:0:8})"
 
     - name: Notify earthsci.dev
       if: steps.decide.outputs.publish == 'true' && inputs.dispatch-token != ''
@@ -105,6 +129,7 @@ runs:
         GH_TOKEN: ${{ inputs.dispatch-token }}
         SITE_REPO: ${{ inputs.site-repo }}
         REPO: ${{ github.repository }}
+        VERSION: ${{ steps.decide.outputs.version }}
       run: |
         set -euo pipefail
         id=$(python -c "import json,sys; print(json.load(open(sys.argv[1]))['id'])" "$RUNNER_TEMP/docs-bundle/bundle.json")
@@ -112,7 +137,7 @@ runs:
           -H "Authorization: Bearer ${GH_TOKEN}" \
           -H "Accept: application/vnd.github+json" \
           "https://api.github.com/repos/${SITE_REPO}/dispatches" \
-          -d "$(python -c "import json,os; print(json.dumps({'event_type':'docs-updated','client_payload':{'id':'$id','repo':os.environ['REPO'],'sha':os.environ['GITHUB_SHA']}}))")"
+          -d "$(python -c "import json,os; print(json.dumps({'event_type':'docs-updated','client_payload':{'id':'$id','repo':os.environ['REPO'],'sha':os.environ['GITHUB_SHA'],'version':os.environ['VERSION']}}))")"
 
     - name: Warn when the dispatch token is missing
       if: steps.decide.outputs.publish == 'true' && inputs.dispatch-token == ''

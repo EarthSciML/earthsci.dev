@@ -270,3 +270,13 @@ details summary { cursor: pointer; color: #1f4f3a; }
 .project-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; list-style: none; padding: 0; }
 .project-cards li { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem 1rem; }
 .container img { max-width: 100%; height: auto; }
+
+/* Versioned API reference: selector + banner (partials/api-version.html) */
+.api-version { background: #eef3f8; border-bottom: 1px solid #d0dbe6; padding: 0.35rem 1.25rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; font-size: 0.9rem; }
+.api-version-picker { position: relative; }
+.api-version-picker summary { cursor: pointer; list-style: none; padding: 0.15rem 0.6rem; border: 1px solid #b7c6d6; border-radius: 4px; background: #fff; }
+.api-version-picker summary::after { content: " \25BE"; }
+.api-version-picker ul { position: absolute; z-index: 20; margin: 0.2rem 0 0; padding: 0.25rem 0; list-style: none; min-width: 11rem; max-height: 22rem; overflow: auto; background: #fff; border: 1px solid #b7c6d6; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.api-version-picker li a { display: block; padding: 0.2rem 0.8rem; text-decoration: none; }
+.api-version-picker li a:hover { background: #eef3f8; }
+.api-version-banner { margin: 0; padding: 0.15rem 0.6rem; background: #fff4d6; border: 1px solid #e6cf8a; border-radius: 4px; }
