@@ -1,0 +1,34 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+{{ with or .Params.description site.Params.description }}<meta name="description" content="{{ . }}">{{ end }}
+<link rel="stylesheet" href="{{ "css/site.css" | relURL }}">
+{{ if or .Params.api_tabs (eq .Type "api") }}{{ partial "api-tabs.html" . }}{{ end }}
+
+{{/* KaTeX for client-side math. Auto-render scans $$...$$ / \(...\). */}}
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false}
+          ],
+          throwOnError: false
+        });"></script>
+
+{{/* Pagefind search UI (params.pagefind); the /pagefind/ bundle is produced
+     after the Hugo build in CI. Without it the UI script is skipped. */}}
+{{ if site.Params.pagefind }}
+<link rel="stylesheet" href="{{ "pagefind/pagefind-ui.css" | relURL }}">
+<script defer src="{{ "pagefind/pagefind-ui.js" | relURL }}"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", function () {
+    if (window.PagefindUI) {
+      new PagefindUI({ element: "#site-search", showSubResults: true, showImages: false });
+    }
+  });
+</script>
+{{ end }}

@@ -1,0 +1,27 @@
+{{ define "main" }}
+<article class="page" data-pagefind-body>
+  <header>
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p class="lede">{{ . }}</p>{{ end }}
+    {{/* Catalog metadata (EarthSciModels components, EarthSciDiscretizations rules).
+         Taxonomy terms live at site-wide URLs (/domains/..., see hugo.toml). */}}
+    {{ $repo := "" }}{{ with index site.Data.projects .Section }}{{ with .repo }}{{ $repo = printf "https://github.com/%s" . }}{{ end }}{{ end }}
+    {{ if or .Params.domain .Params.subdomain .Params.component_type .Params.esm_version .Params.esm_path .Params.tags }}
+    <dl class="meta">
+      {{ with .Params.domain }}<dt>Domain</dt><dd><a href="{{ printf "domains/%s/" (. | urlize) | relURL }}">{{ . }}</a></dd>{{ end }}
+      {{ with .Params.subdomain }}<dt>Subdomain</dt><dd><a href="{{ printf "subdomains/%s/" (. | urlize) | relURL }}">{{ . }}</a></dd>{{ end }}
+      {{ with .Params.component_type }}<dt>Type</dt><dd><a href="{{ printf "component_types/%s/" (. | urlize) | relURL }}">{{ . }}</a></dd>{{ end }}
+      {{ with .Params.esm_version }}<dt>.esm schema</dt><dd><code>{{ . }}</code></dd>{{ end }}
+      {{ with .Params.esm_path }}<dt>Source</dt><dd>{{ if $repo }}<a href="{{ $repo }}/blob/main/{{ . }}"><code>{{ . }}</code></a>{{ else }}<code>{{ . }}</code>{{ end }}</dd>{{ end }}
+      {{ with .Params.tags }}
+        <dt>Tags</dt>
+        <dd>{{ range . }}<a class="tag" href="{{ printf "tags/%s/" (. | urlize) | relURL }}">#{{ . }}</a> {{ end }}</dd>
+      {{ end }}
+    </dl>
+    {{ end }}
+  </header>
+  <section class="content">
+    {{ .Content }}
+  </section>
+</article>
+{{ end }}

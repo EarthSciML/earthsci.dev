@@ -1,0 +1,33 @@
+{{/* Site header: project switcher, search, and (inside a project section) that
+     project's own nav from data/projects/<id>.json (written by tools/assemble.py). */}}
+{{ $id := .Section }}
+{{ $projects := slice }}
+{{ range site.Data.projects }}{{ $projects = $projects | append . }}{{ end }}
+{{ $projects = sort $projects "order" }}
+{{ $current := index site.Data.projects $id }}
+<header class="site-header">
+  <nav class="site-nav">
+    <a class="brand" href="{{ "" | relURL }}">EarthSci</a>
+    <ul class="nav-links project-switcher">
+      <li><a href="{{ "quickstart/" | relURL }}">Quick start</a></li>
+      {{ range $projects }}
+        <li><a href="{{ printf "%s/" .id | relURL }}"{{ if eq .id $id }} class="active" aria-current="true"{{ end }}>{{ .title }}</a></li>
+      {{ end }}
+    </ul>
+    {{ if site.Params.pagefind }}<div id="site-search" class="site-search"></div>{{ end }}
+  </nav>
+  {{ with $current }}
+    <nav class="project-nav" aria-label="{{ .title }}">
+      <a class="project-title" href="{{ printf "%s/" .id | relURL }}">{{ .title }}</a>
+      <ul class="nav-links">
+        {{ range .nav }}
+          {{ $href := .path }}
+          {{ if strings.HasPrefix $href "/" }}{{ $href = strings.TrimPrefix "/" $href | relURL }}
+          {{ else }}{{ $href = printf "%s/%s" $id $href | relURL }}{{ end }}
+          <li><a href="{{ $href }}">{{ .title }}</a></li>
+        {{ end }}
+        {{ with .repo }}<li><a href="https://github.com/{{ . }}">GitHub</a></li>{{ end }}
+      </ul>
+    </nav>
+  {{ end }}
+</header>

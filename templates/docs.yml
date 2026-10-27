@@ -1,0 +1,94 @@
+name: docs
+
+# Installed in each EarthSci source repo as .github/workflows/docs.yml.
+# Nothing of the docs machinery lives in this repo: extraction, rendering and
+# bundling all run from EarthSciML/earthsci.dev (DESIGN.md there).
+#
+# On push to main: extract API docs, build the docs bundle, publish it to this
+# repo's `docs-bundle` branch and notify earthsci.dev, which rebuilds the site.
+# On pull requests: the same, minus publishing and notifying (validation only).
+#
+# Needs the repo (or org) secret SITE_DISPATCH_TOKEN: a token with contents:write
+# on EarthSciML/earthsci.dev.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      bindings: ${{ steps.plan.outputs.bindings }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: EarthSciML/earthsci.dev
+          ref: main
+          path: .earthsci-dev
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Prints the bindings in docs/api/config.toml as a JSON array ([] when
+      # the repo has no API reference).
+      - id: plan
+        run: echo "bindings=$(python .earthsci-dev/tools/api_docs/plan.py --repo-root .)" >> "$GITHUB_OUTPUT"
+
+  extract:
+    needs: plan
+    if: needs.plan.outputs.bindings != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # A failing binding is reported but does not block the bundle; it renders
+    # as "not extracted in this build". Remove to make failures fatal.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        binding: ${{ fromJSON(needs.plan.outputs.bindings) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EarthSciML/earthsci.dev/.github/actions/api-extract@main
+        with:
+          binding: ${{ matrix.binding }}
+
+  bundle:
+    needs: [plan, extract]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write   # push the docs-bundle branch
+    steps:
+      - uses: actions/checkout@v4
+
+      # Prebuild steps: whatever generates content this repo does not commit
+      # (catalog pages, plots, narrative pages). List the commands in
+      # docs/site.toml `prebuild` and run them here, after setting up their
+      # toolchains, e.g.:
+      #
+      # - uses: actions/setup-python@v5
+      #   with: { python-version: '3.12' }
+      # - run: python docs/generate_catalog.py
+
+      - name: Download extracted docstrings
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: api-docs-*
+          path: build/api-docs
+          merge-multiple: true
+
+      - uses: EarthSciML/earthsci.dev/.github/actions/docs-bundle@main
+        with:
+          dispatch-token: ${{ secrets.SITE_DISPATCH_TOKEN }}
