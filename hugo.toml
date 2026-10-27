@@ -4,6 +4,8 @@ title = "EarthSci"
 # No theme: layouts are provided directly under layouts/.
 
 enableRobotsTXT = true
+# Content comes from other repos' bundles, so git info is not meaningful.
+enableGitInfo = false
 
 [params]
   description = "Documentation for the EarthSciML software ecosystem."
@@ -46,6 +48,3 @@ enableRobotsTXT = true
   section = ["HTML"]
   taxonomy = ["HTML"]
   term = ["HTML"]
-
-# Content comes from other repos' bundles, so git info is not meaningful.
-enableGitInfo = false
