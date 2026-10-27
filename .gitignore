@@ -9,3 +9,4 @@ build/*/*/public/
 /static/*/
 !/static/css/
 /data/projects/
+__pycache__/
