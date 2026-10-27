@@ -40,12 +40,13 @@ runs:
             echo "ts_lock=$(cfg bindings.typescript.path)/package-lock.json" >> "$GITHUB_OUTPUT" ;;
           rust)
             echo "rust_nightly=$(cfg bindings.rust.nightly --default nightly-2026-10-01)" >> "$GITHUB_OUTPUT"
-            crate="$(cfg bindings.rust.path)"
             ex="$(cfg bindings.rust.examples --default "$(cfg examples)/rust")"
             {
               echo "rust_workspaces<<EOF"
               # rust.sh builds into these target directories, not the workspaces' own.
-              echo "$crate -> build/api-docs/rust-rustdoc-target"
+              while IFS= read -r crate; do
+                echo "$crate -> build/api-docs/rust-rustdoc-target"
+              done < <(python3 "$TOOLS/config.py" --repo-root "$GITHUB_WORKSPACE" crates --field path)
               echo "$ex -> build/api-docs/rust-examples-target"
               echo "EOF"
             } >> "$GITHUB_OUTPUT" ;;

@@ -461,8 +461,18 @@ class Renderer:
 
     @property
     def rust_crate(self) -> str:
-        b = self.cfg.bindings.get("rust", {})
-        return (b.get("crate") or b.get("package") or "").replace("-", "_")
+        crates = self.cfg.rust_crates()
+        if crates:
+            return crates[0]["module"]
+        return ""
+
+    def rust_module_path(self, mod: str) -> str:
+        """A `public_modules` entry as a path: `planner::x` already names its
+        crate (several crates configured); any other is in the default crate."""
+        crates = [c["module"] for c in self.cfg.rust_crates()]
+        if len(crates) > 1 and mod.partition("::")[0] in crates:
+            return mod
+        return f"{self.rust_crate}::{mod}"
 
     def bindings_phrase(self) -> str:
         names = [LABEL[b] for b in self.bindings]
@@ -930,7 +940,7 @@ class Renderer:
             if mods:
                 md.append(
                     "The interiors of these public modules are extension seams too: "
-                    + ", ".join(code(f"{self.rust_crate}::{m}") for m in mods)
+                    + ", ".join(code(self.rust_module_path(m)) for m in mods)
                     + ".\n"
                 )
         entries = []

@@ -9,7 +9,9 @@
 # Reads [bindings.rust] from docs/api/config.toml: `path` (crate directory),
 # `crate` (package name), and optionally `features` (enabled for rustdoc),
 # `docs_rs` (docs.rs root URL), `docs_rs_features`, `nightly` (pinned rustdoc
-# toolchain) and `examples` (examples package directory).
+# toolchain) and `examples` (examples package directory). Several crates are
+# listed as [[bindings.rust.crates]] (each with those same per-crate keys);
+# each is run through rustdoc and the results are merged into rust.json.
 #
 # Rustdoc's JSON output is a nightly-only flag. The toolchain that runs it is
 # $RUSTDOC_TOOLCHAIN, default the pinned nightly (config `nightly`, default
@@ -27,13 +29,14 @@ parse_args "$@"
 cd "$ROOT"
 
 mode="$MODE"
-CRATE_DIR="$(cfg bindings.rust.path)"
-CRATE="$(cfg bindings.rust.crate)"
-CRATE_MODULE="${CRATE//-/_}"
-FEATURES="$(cfg bindings.rust.features --default '' --join ,)"
-DOCS_RS="$(cfg bindings.rust.docs_rs --default "https://docs.rs/$CRATE/latest/")"
-DOCS_RS_FEATURES="$(cfg bindings.rust.docs_rs_features --default '' --join ,)"
 PINNED_NIGHTLY="$(cfg bindings.rust.nightly --default nightly-2026-10-01)"
+# One entry per crate; the first is the default crate (see README.md).
+mapfile -t CRATE_DIRS < <("$PY" "$TOOLS/config.py" --repo-root "$ROOT" crates --field path)
+mapfile -t CRATE_MODULES < <("$PY" "$TOOLS/config.py" --repo-root "$ROOT" crates --field module)
+mapfile -t CRATE_DOCS_RS < <("$PY" "$TOOLS/config.py" --repo-root "$ROOT" crates --field docs_rs)
+mapfile -t CRATE_DOCS_RS_FEATURES < <("$PY" "$TOOLS/config.py" --repo-root "$ROOT" crates --field docs_rs_features)
+mapfile -t CRATE_FEATURES < <("$PY" "$TOOLS/config.py" --repo-root "$ROOT" crates --field features)
+ALL_MODULES="$(IFS=,; echo "${CRATE_MODULES[*]}")"
 
 BUILD="$ROOT/build"
 mkdir -p "$BUILD/api-docs" "$BUILD/tmp"
@@ -78,28 +81,43 @@ extract() {
     echo "rust.sh: extracting with $rustdoc_version" >&2
 
     local target="$BUILD/api-docs/rust-rustdoc-target"
-    # `features` gate root exports named in the manifest; building with them
-    # documents every listed spelling.
     if [[ "$bootstrap" == 1 ]]; then export RUSTC_BOOTSTRAP=1; fi
-    # Pin to Cargo.lock when the crate commits one; libraries often do not.
-    local locked=""
-    if [[ -f "$CRATE_DIR/Cargo.lock" ]]; then locked="--locked"; fi
-    CARGO_TARGET_DIR="$target" $cargo rustdoc \
-        --manifest-path "$CRATE_DIR/Cargo.toml" \
-        --lib $locked ${FEATURES:+--features "$FEATURES"} \
-        -- -Z unstable-options --output-format json
-    unset RUSTC_BOOTSTRAP
-
     local note=""
     if [[ "$bootstrap" == 1 ]]; then note=", RUSTC_BOOTSTRAP=1"; fi
-    "$PY" "$TOOLS/rust_extract.py" \
-        --rustdoc-json "$target/doc/$CRATE_MODULE.json" \
-        --manifest "$(cfg manifest)" \
-        --cargo-toml "$CRATE_DIR/Cargo.toml" \
-        --crate-dir "$CRATE_DIR" --crate-module "$CRATE_MODULE" \
-        --docs-rs-root "$DOCS_RS" --docs-rs-features "$DOCS_RS_FEATURES" \
-        --extractor "rustdoc JSON ($rustdoc_version$note)" \
-        --out "$BUILD/api-docs/rust.json"
+
+    local partials=() i
+    for i in "${!CRATE_DIRS[@]}"; do
+        local dir="${CRATE_DIRS[$i]}" module="${CRATE_MODULES[$i]}"
+        # `features` gate root exports named in the manifest; building with them
+        # documents every listed spelling.
+        local features="${CRATE_FEATURES[$i]}"
+        # Pin to Cargo.lock when the crate commits one; libraries often do not.
+        local locked=""
+        if [[ -f "$dir/Cargo.lock" ]]; then locked="--locked"; fi
+        CARGO_TARGET_DIR="$target" $cargo rustdoc \
+            --manifest-path "$dir/Cargo.toml" \
+            --lib $locked ${features:+--features "$features"} \
+            -- -Z unstable-options --output-format json
+        local out="$BUILD/api-docs/rust.json"
+        if (( ${#CRATE_DIRS[@]} > 1 )); then
+            out="$BUILD/api-docs/rust-$module.partial.json"
+            partials+=("$out")
+        fi
+        "$PY" "$TOOLS/rust_extract.py" \
+            --rustdoc-json "$target/doc/$module.json" \
+            --manifest "$(cfg manifest)" \
+            --cargo-toml "$dir/Cargo.toml" \
+            --crate-dir "$dir" --crate-module "$module" --crates "$ALL_MODULES" \
+            --docs-rs-root "${CRATE_DOCS_RS[$i]}" --docs-rs-features "${CRATE_DOCS_RS_FEATURES[$i]}" \
+            --extractor "rustdoc JSON ($rustdoc_version$note)" \
+            --out "$out"
+    done
+    unset RUSTC_BOOTSTRAP
+    if (( ${#partials[@]} )); then
+        "$PY" "$TOOLS/rust_extract.py" --merge "${partials[@]}" --manifest "$(cfg manifest)" \
+            --out "$BUILD/api-docs/rust.json"
+        rm -f "${partials[@]}"
+    fi
 }
 
 examples() {
@@ -130,9 +148,9 @@ examples() {
     # Cargo then adds only the examples package itself (the copy is gitignored).
     # A crate inside a workspace has its lock file at the workspace root, so
     # look upward from the crate directory.
-    local lock="$CRATE_DIR" ; lock="${lock%/}"
+    local lock="${CRATE_DIRS[0]}" ; lock="${lock%/}"
     while [[ ! -f "$lock/Cargo.lock" && "$lock" == */* ]]; do lock="${lock%/*}"; done
-    [[ -f "$lock/Cargo.lock" ]] || { echo "rust.sh: no Cargo.lock at or above $CRATE_DIR" >&2; exit 1; }
+    [[ -f "$lock/Cargo.lock" ]] || { echo "rust.sh: no Cargo.lock at or above ${CRATE_DIRS[0]}" >&2; exit 1; }
     cp "$lock/Cargo.lock" "$dir/Cargo.lock"
     CARGO_TARGET_DIR="$target" $cargo build --manifest-path "$dir/Cargo.toml" --examples
 

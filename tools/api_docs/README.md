@@ -75,12 +75,42 @@ are extracted, rendered and checked. Per-binding keys:
 | | `extras` | pip extras installed for the examples, list |
 | | `src` | source dir relative to `path` (default `src`) |
 | rust | `crate` | package name |
+| | `crates` | several crates: a `[[bindings.rust.crates]]` list instead of `path`/`crate`/`features`/`docs_rs`/`docs_rs_features` (see below) |
 | | `features` | features enabled for rustdoc, list |
 | | (spellings) | in the manifest, a spelling is a root export (`load_path`) or an item of a public module written `module::name` (`toy::toy_problem`); a crate inside a workspace is documented through its own directory (its `Cargo.lock` is found at the workspace root) |
 | | `docs_rs`, `docs_rs_features` | docs.rs root URL (default `https://docs.rs/<crate>/latest/`) and the features it builds with |
 | | `nightly` | pinned nightly for rustdoc JSON (default `nightly-2026-10-01`) |
 | go | `package` | import path of the package documented (`path` is its directory) |
 | | `module_file` | go.mod used by CI's setup-go (default `<path>/go.mod`) |
+
+**Several crates in one binding.** List each crate as a table; the per-crate
+keys are `path` (required), `crate`, `features`, `docs_rs` and
+`docs_rs_features`, with the same meaning and defaults as above. `nightly` and
+`examples` stay on `[bindings.rust]`. `path` and `crates` together is an error.
+
+```toml
+[bindings.rust]
+nightly = "nightly-2026-10-01"
+
+[[bindings.rust.crates]]            # the first crate is the default crate
+path = "rust/earthsci-integrator"
+crate = "earthsci-integrator"
+
+[[bindings.rust.crates]]
+path = "rust/earthsci-integrator-planner"
+crate = "earthsci-integrator-planner"
+```
+
+Each crate is run through rustdoc (`rust.sh`) and the results are merged into
+one `rust.json`; a symbol's `source.path` and `native_url` are its own crate's.
+In the manifest, a Rust spelling whose first segment is a configured crate's
+module name (the crate name with `-` as `_`) belongs to that crate:
+`earthsci_integrator_planner::plan::make_plan` is `plan::make_plan` inside the
+planner crate. Any other spelling belongs to the default (first) crate, exactly
+as in the single-crate form. A crate name wins over a same-named module of the
+default crate. `binding_profiles.rust.public_modules` entries follow the same
+rule. The landing page shows the default crate's version. Spellings stay
+whole in the output: the entry's `spelling` is the manifest's.
 
 ### 0.2 The manifest (`api-surface.json`)
 

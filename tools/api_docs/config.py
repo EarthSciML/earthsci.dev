@@ -39,6 +39,9 @@ LABELS = {
 }
 
 
+_CRATE_KEYS = ("path", "crate", "features", "docs_rs", "docs_rs_features")
+
+
 class ConfigError(Exception):
     pass
 
@@ -89,6 +92,32 @@ class Config:
             "examples", f"{self.examples}/{binding}"
         )
 
+    def rust_crates(self) -> list[dict]:
+        """The Rust crates to document, defaults filled in, first = default crate.
+
+        ``[[bindings.rust.crates]]`` lists them; the legacy single-crate keys
+        (``path``, ``crate``, ``features``, ``docs_rs``, ``docs_rs_features``
+        directly under ``[bindings.rust]``) are one crate.
+        """
+        b = self.bindings.get("rust")
+        if b is None:
+            return []
+        entries = b.get("crates") or [{k: b[k] for k in _CRATE_KEYS if k in b}]
+        crates = []
+        for e in entries:
+            name = e.get("crate") or Path(e["path"]).name
+            crates.append(
+                {
+                    "path": str(e["path"]).strip("/"),
+                    "crate": name,
+                    "module": name.replace("-", "_"),
+                    "features": list(e.get("features", [])),
+                    "docs_rs": e.get("docs_rs") or f"https://docs.rs/{name}/latest/",
+                    "docs_rs_features": list(e.get("docs_rs_features", [])),
+                }
+            )
+        return crates
+
     def get(self, dotted: str):
         """A value by dotted key, e.g. ``bindings.rust.crate``; None when absent."""
         node = {
@@ -131,7 +160,18 @@ def load(root: Path) -> Config:
     for name, b in cfg.bindings.items():
         if name not in SUPPORTED:
             raise ConfigError(f"{path}: unknown binding {name!r} (supported: {', '.join(SUPPORTED)})")
-        if "path" not in b:
+        if name == "rust" and "crates" in b:
+            if not isinstance(b["crates"], list) or not b["crates"]:
+                raise ConfigError(f"{path}: [bindings.rust] `crates` must be a non-empty [[bindings.rust.crates]] list")
+            if "path" in b:
+                raise ConfigError(f"{path}: [bindings.rust] has both `path` and `crates`; use one form")
+            for c in b["crates"]:
+                if "path" not in c:
+                    raise ConfigError(f"{path}: every [[bindings.rust.crates]] needs `path`")
+            mods = [c.get("crate") or Path(c["path"]).name for c in b["crates"]]
+            if len(set(m.replace("-", "_") for m in mods)) != len(mods):
+                raise ConfigError(f"{path}: duplicate crate in [[bindings.rust.crates]]")
+        elif "path" not in b:
             raise ConfigError(f"{path}: [bindings.{name}] needs `path`")
     site_toml = root / "docs" / "site.toml"
     if site_toml.is_file():
@@ -152,6 +192,9 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--join", default="\n", help="separator for list values")
     b = sub.add_parser("bindings", help="list configured binding names")
     b.add_argument("--json", action="store_true")
+    c = sub.add_parser("crates", help="the Rust crates, one per line (or JSON)")
+    c.add_argument("--field", default="path", help="crate, module, path, docs_rs, features, docs_rs_features")
+    c.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
     try:
         cfg = load(args.repo_root)
@@ -163,6 +206,15 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(cfg.names))
         else:
             print("\n".join(cfg.names))
+        return 0
+    if args.cmd == "crates":
+        crates = cfg.rust_crates()
+        if args.json:
+            print(json.dumps(crates))
+        else:
+            for cr in crates:
+                v = cr[args.field]
+                print(",".join(v) if isinstance(v, list) else v)
         return 0
     val = cfg.get(args.key)
     if val is None:

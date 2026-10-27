@@ -25,6 +25,7 @@ TESTED_FORMAT_VERSIONS = {57, 61}
 
 # Set from the command line by main() (rust.sh reads them from docs/api/config.toml).
 CRATE_DIR = ""  # the crate directory, relative to the repository root
+SOURCE_ROOT = ""  # what rustdoc's span filenames are relative to (the workspace root)
 CRATE_MODULE = ""  # the crate's root module name (the crate name with - as _)
 DOCS_RS_ROOT = ""  # e.g. https://docs.rs/<crate>/latest/
 # Cargo features docs.rs builds with (the crate's defaults unless
@@ -807,25 +808,100 @@ def deprecation_note(target: dict) -> str | None:
     return f"**Deprecated**{since}{note}"
 
 
+def workspace_root(crate_dir: str) -> str:
+    """The nearest directory at or above ``crate_dir`` (relative to the working
+    directory, the repository root) whose Cargo.toml has a ``[workspace]``
+    table; the crate directory itself when there is none."""
+    d = Path(crate_dir)
+    for cand in [d, *d.parents]:
+        toml = cand / "Cargo.toml"
+        if toml.is_file() and re.search(r"^\[workspace\]", toml.read_text(), re.M):
+            return cand.as_posix() if str(cand) != "." else ""
+    return crate_dir
+
+
+def owner(spelling: str, crates: list[str]) -> tuple[str | None, str]:
+    """The crate a manifest spelling belongs to, and the spelling inside it.
+
+    With several crates configured, a spelling whose first segment is a
+    configured crate's module name (`planner::plan`) belongs to that crate
+    and is looked up as `plan`; any other spelling belongs to the first
+    (default) crate unchanged. Crate names win over a same-named module of
+    the default crate. With one crate there is no qualification (None).
+    """
+    if len(crates) > 1:
+        head, sep, rest = spelling.partition("::")
+        if sep and head in crates:
+            return head, rest
+    return None, spelling
+
+
+def manifest_spellings(manifest: dict) -> list[tuple]:
+    spellings = []
+    for sym in manifest["symbols"]:
+        b = sym["bindings"].get("rust")
+        if b is None:
+            continue
+        for s in b if isinstance(b, list) else [b]:
+            spellings.append((s, sym["kind"], sym["name"], sym["tier"]))
+    return spellings
+
+
+def merge(args) -> int:
+    """Join the per-crate partial files into one rust.json, in manifest order."""
+    manifest = json.loads(args.manifest.read_text())
+    parts = [json.loads(p.read_text()) for p in args.merge]
+    by_spelling = {}
+    for part in parts:
+        for sym in part["symbols"]:
+            by_spelling[sym["spelling"]] = sym
+    symbols = []
+    for spelling, kind, _, _ in manifest_spellings(manifest):
+        if spelling not in by_spelling:
+            sys.exit(f"rust_extract: no crate produced {spelling!r}")
+        symbols.append(by_spelling[spelling])
+    out = {
+        "binding": "rust",
+        "package_version": parts[0]["package_version"],
+        "extractor": parts[0]["extractor"],
+        "symbols": symbols,
+    }
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
+    print(f"rust_extract: merged {len(parts)} crates, {len(symbols)} spellings -> {args.out}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--rustdoc-json", required=True, type=Path)
+    ap.add_argument("--merge", nargs="+", type=Path, help="merge these partial files (needs --manifest, --out)")
+    ap.add_argument("--crates", default="", help="comma-separated module names of every configured crate")
+    ap.add_argument("--rustdoc-json", type=Path)
     ap.add_argument("--manifest", required=True, type=Path)
-    ap.add_argument("--cargo-toml", required=True, type=Path)
+    ap.add_argument("--cargo-toml", type=Path)
     ap.add_argument(
-        "--extractor", required=True, help="toolchain description for the `extractor` field"
+        "--extractor", help="toolchain description for the `extractor` field"
     )
     ap.add_argument("--out", required=True, type=Path)
-    ap.add_argument("--crate-dir", required=True, help="crate directory, relative to the repo root")
-    ap.add_argument("--crate-module", required=True, help="root module name (crate name, - as _)")
-    ap.add_argument("--docs-rs-root", required=True, help="e.g. https://docs.rs/<crate>/latest/")
+    ap.add_argument("--crate-dir", help="crate directory, relative to the repo root")
+    ap.add_argument("--crate-module", help="root module name (crate name, - as _)")
+    ap.add_argument("--docs-rs-root", help="e.g. https://docs.rs/<crate>/latest/")
     ap.add_argument(
         "--docs-rs-features", default="", help="comma-separated features docs.rs builds with"
     )
     args = ap.parse_args()
+    if args.merge:
+        return merge(args)
+    for req in ("rustdoc_json", "cargo_toml", "extractor", "crate_dir", "crate_module", "docs_rs_root"):
+        if getattr(args, req) is None:
+            ap.error(f"--{req.replace('_', '-')} is required")
 
     global CRATE_DIR, CRATE_MODULE, DOCS_RS_ROOT, DOCS_RS_FEATURES
     CRATE_DIR = args.crate_dir.strip("/")
+    # rustdoc reports span filenames relative to the workspace root, which for
+    # a crate inside a Cargo workspace is above the crate directory.
+    global SOURCE_ROOT
+    SOURCE_ROOT = workspace_root(CRATE_DIR)
     CRATE_MODULE = args.crate_module
     DOCS_RS_ROOT = args.docs_rs_root if args.docs_rs_root.endswith("/") else args.docs_rs_root + "/"
     DOCS_RS_FEATURES = {f for f in args.docs_rs_features.split(",") if f}
@@ -848,24 +924,25 @@ def main() -> int:
             version = version_re.search((parent / "Cargo.toml").read_text())
     version = version.group(1) if version else "unknown"
 
+    # With several crates, this run documents only the spellings it owns.
+    crates = [c for c in args.crates.split(",") if c]
     spellings = []
-    for sym in manifest["symbols"]:
-        b = sym["bindings"].get("rust")
-        if b is None:
+    for s, kind, canonical, tier in manifest_spellings(manifest):
+        crate, inner = owner(s, crates)
+        if len(crates) > 1 and (crate or crates[0]) != CRATE_MODULE:
             continue
-        for s in b if isinstance(b, list) else [b]:
-            spellings.append((s, sym["kind"], sym["name"], sym["tier"]))
+        spellings.append((s, kind, canonical, tier, inner))
 
     entries = root_entries(doc)
     pub_mods = public_modules(doc)
     symbols = []
     missing_docs = []
-    for spelling, kind, canonical, tier in spellings:
+    for full, kind, canonical, tier, spelling in spellings:
         root_item, target, tid = pick(entries.get(spelling, []), kind)
         if target is None:
             symbols.append(
                 {
-                    "spelling": spelling,
+                    "spelling": full,
                     "kind": kind,
                     "signatures": [],
                     "doc": None,
@@ -874,7 +951,7 @@ def main() -> int:
                     "missing": True,
                 }
             )
-            missing_docs.append((tier, canonical, spelling, "not found"))
+            missing_docs.append((tier, canonical, full, "not found"))
             continue
         short = spelling.rsplit("::", 1)[-1]
         sigs = [declaration(doc, target, short)] + inherent_methods(doc, target, short)
@@ -884,7 +961,7 @@ def main() -> int:
             extra = convert_doc(doc, root_item["docs"], root_item.get("links"), spelling)
             body = f"{body}\n\n{extra}" if body else extra
         if body is None:
-            missing_docs.append((tier, canonical, spelling, "no doc comment"))
+            missing_docs.append((tier, canonical, full, "no doc comment"))
         else:
             notes = [n for n in (deprecation_note(target), feature_note(root_item, target)) if n]
             if notes:
@@ -892,10 +969,13 @@ def main() -> int:
         span = target.get("span") or root_item.get("span")
         source = None
         if span:
-            source = {"path": f"{CRATE_DIR}/{span['filename']}", "line": span["begin"][0]}
+            source = {
+                "path": f"{SOURCE_ROOT}/{span['filename']}".lstrip("/"),
+                "line": span["begin"][0],
+            }
         symbols.append(
             {
-                "spelling": spelling,
+                "spelling": full,
                 "kind": kind,
                 "signatures": sigs,
                 "doc": body,
