@@ -113,3 +113,8 @@ tools/bundle.py                    builds a bundle from a source repo (used by d
 .github/workflows/site.yml         build and deploy
 templates/docs.yml                 the caller workflow a source repo installs
 ```
+
+## Cross-project links
+
+`assemble.py` prefixes every root-relative link with `/<id>`, so a link from one
+project to another must be an absolute URL (`https://earthsci.dev/ast/...`).
