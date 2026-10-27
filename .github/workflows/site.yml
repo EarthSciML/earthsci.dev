@@ -72,6 +72,15 @@ jobs:
       - name: Build Pagefind search index
         run: npx --yes "pagefind@${PAGEFIND_VERSION}" --site public
 
+      # Projects with no bundle yet (assemble.py skipped them) have no pages, so
+      # links to their sections are expected to dangle; lychee reads .lycheeignore.
+      - name: Ignore links into projects that have no bundle yet
+        run: |
+          for id in $(python3 -c "import tomllib;print(*[p['id'] for p in tomllib.load(open('projects.toml','rb'))['project']])"); do
+            [ -f "data/projects/$id.json" ] || echo "/public/$id(/|$)" >> .lycheeignore
+          done
+          cat .lycheeignore 2>/dev/null || true
+
       - name: Check internal links
         uses: lycheeverse/lychee-action@v2
         with:
