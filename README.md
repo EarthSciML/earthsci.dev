@@ -52,8 +52,9 @@ Python 3.11+ is needed (`tomllib`); on older versions `pip install tomli`.
 
 ## Secrets
 
-- `SITE_DISPATCH_TOKEN` (in each source repo, or org-wide): token with
-  `contents: write` on this repo, used to send the `docs-updated` dispatch.
+- `DOCS_APP_ID` and `DOCS_APP_PRIVATE_KEY` (in each source repo, or org-wide):
+  a GitHub App installed on this repo with `contents: write`; the source
+  repos' workflows mint a token from it to send the `docs-updated` dispatch.
 - `DOCS_FETCH_TOKEN` (optional, here): read access to the source repos if any
   is private. Public repos need nothing.
 

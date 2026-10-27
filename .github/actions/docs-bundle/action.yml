@@ -10,7 +10,7 @@ description: >-
 
 inputs:
   dispatch-token:
-    description: Token allowed to send repository_dispatch to the site repo (SITE_DISPATCH_TOKEN). Empty disables the dispatch.
+    description: Token allowed to send repository_dispatch to the site repo. Empty disables the dispatch.
     required: false
     default: ''
   publish:
@@ -142,4 +142,4 @@ runs:
     - name: Warn when the dispatch token is missing
       if: steps.decide.outputs.publish == 'true' && inputs.dispatch-token == ''
       shell: bash
-      run: echo "::warning::SITE_DISPATCH_TOKEN is not set; the docs bundle was published but earthsci.dev was not notified."
+      run: echo "::warning::the dispatch token is empty; the docs bundle was published but earthsci.dev was not notified."

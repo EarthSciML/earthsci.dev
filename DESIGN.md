@@ -43,9 +43,11 @@ changed (for the run summary). A repo with no `docs-bundle` branch yet is
 skipped with a warning. On pull requests the source repo's workflow runs
 extract + render strictly and builds the bundle but does not push or dispatch.
 
-Secrets: each source repo needs `SITE_DISPATCH_TOKEN` (fine-grained PAT or App
-token with contents:write on EarthSciML/earthsci.dev; an org-level secret
-works). Pushing `docs-bundle` uses the repo's own `GITHUB_TOKEN` (needs
+Secrets: each source repo needs `DOCS_APP_ID` and `DOCS_APP_PRIVATE_KEY` (a
+GitHub App installed on EarthSciML/earthsci.dev with contents:write; org-level
+secrets work). The bundle job mints a short-lived token from them with
+`actions/create-github-app-token` and passes it to `docs-bundle` as
+`dispatch-token`. Pushing `docs-bundle` uses the repo's own `GITHUB_TOKEN` (needs
 `contents: write` in the bundle job).
 
 ## Versions
