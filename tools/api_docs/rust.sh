@@ -81,9 +81,12 @@ extract() {
     # `features` gate root exports named in the manifest; building with them
     # documents every listed spelling.
     if [[ "$bootstrap" == 1 ]]; then export RUSTC_BOOTSTRAP=1; fi
+    # Pin to Cargo.lock when the crate commits one; libraries often do not.
+    local locked=""
+    if [[ -f "$CRATE_DIR/Cargo.lock" ]]; then locked="--locked"; fi
     CARGO_TARGET_DIR="$target" $cargo rustdoc \
         --manifest-path "$CRATE_DIR/Cargo.toml" \
-        --lib --locked ${FEATURES:+--features "$FEATURES"} \
+        --lib $locked ${FEATURES:+--features "$FEATURES"} \
         -- -Z unstable-options --output-format json
     unset RUSTC_BOOTSTRAP
 
