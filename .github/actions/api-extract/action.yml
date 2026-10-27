@@ -1,0 +1,123 @@
+name: API docs extract
+description: >-
+  Extract one binding's docstrings and run its example programs for the calling
+  repository (its docs/api/config.toml), then upload build/api-docs/<binding>.json
+  as the artifact api-docs-<binding>. The caller checks out its own repository
+  first; the tooling comes from this action's repository, so nothing is copied.
+  Use it in a matrix over the bindings printed by tools/api_docs/plan.py.
+
+inputs:
+  binding:
+    description: julia, typescript, python, rust or go. Must be configured in docs/api/config.toml.
+    required: true
+  strict:
+    description: >-
+      Fail the step when extraction or an example fails. When false the failure
+      is reported as a warning and the render marks that binding as not extracted.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    # config.py, regions.py and render.py need Python 3.11+ (tomllib).
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Read the binding's configuration
+      id: cfg
+      shell: bash
+      env:
+        TOOLS: ${{ github.action_path }}/../../../tools/api_docs
+        BINDING: ${{ inputs.binding }}
+      run: |
+        cfg() { python3 "$TOOLS/config.py" --repo-root "$GITHUB_WORKSPACE" get "$@"; }
+        echo "tools=$(cd "$TOOLS" && pwd)" >> "$GITHUB_OUTPUT"
+        case "$BINDING" in
+          typescript)
+            echo "ts_lock=$(cfg bindings.typescript.path)/package-lock.json" >> "$GITHUB_OUTPUT" ;;
+          rust)
+            echo "rust_nightly=$(cfg bindings.rust.nightly --default nightly-2026-10-01)" >> "$GITHUB_OUTPUT"
+            ex="$(cfg bindings.rust.examples --default "$(cfg examples)/rust")"
+            {
+              echo "rust_workspaces<<EOF"
+              # rust.sh builds into these target directories, not the workspaces' own.
+              while IFS= read -r crate; do
+                echo "$crate -> build/api-docs/rust-rustdoc-target"
+              done < <(python3 "$TOOLS/config.py" --repo-root "$GITHUB_WORKSPACE" crates --field path)
+              echo "$ex -> build/api-docs/rust-examples-target"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT" ;;
+          go)
+            mod="$(cfg bindings.go.module_file --default "$(cfg bindings.go.path)/go.mod")"
+            echo "go_mod=$mod" >> "$GITHUB_OUTPUT"
+            echo "go_sum=${mod%go.mod}go.sum" >> "$GITHUB_OUTPUT" ;;
+        esac
+
+    - name: Set up Julia
+      if: inputs.binding == 'julia'
+      uses: julia-actions/setup-julia@v2
+      with:
+        # The examples environment dev-links the package through
+        # Project.toml [sources], which needs Julia 1.11 or newer.
+        version: '1'
+    - name: Cache Julia packages
+      if: inputs.binding == 'julia'
+      uses: julia-actions/cache@v2
+
+    - name: Set up Node.js
+      if: inputs.binding == 'typescript'
+      uses: actions/setup-node@v4
+      with:
+        # The examples run under Node's built-in TypeScript type stripping.
+        node-version: '22'
+        cache: npm
+        cache-dependency-path: ${{ steps.cfg.outputs.ts_lock }}
+
+    # rustdoc's JSON output, which the extractor reads, needs a nightly
+    # toolchain; the examples build on stable.
+    - name: Set up Rust nightly (rustdoc JSON)
+      if: inputs.binding == 'rust'
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ steps.cfg.outputs.rust_nightly }}
+    - name: Set up Rust stable
+      if: inputs.binding == 'rust'
+      uses: dtolnay/rust-toolchain@stable
+    - name: Cache Rust builds
+      if: inputs.binding == 'rust'
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: ${{ steps.cfg.outputs.rust_workspaces }}
+
+    - name: Set up Go
+      if: inputs.binding == 'go'
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: ${{ steps.cfg.outputs.go_mod }}
+        cache-dependency-path: ${{ steps.cfg.outputs.go_sum }}
+
+    - name: Check example regions
+      shell: bash
+      run: python3 "${{ steps.cfg.outputs.tools }}/regions.py" --repo-root "$GITHUB_WORKSPACE" --binding "${{ inputs.binding }}"
+
+    - name: Extract docstrings and run examples
+      shell: bash
+      env:
+        STRICT: ${{ inputs.strict }}
+      run: |
+        if ! bash "${{ steps.cfg.outputs.tools }}/${{ inputs.binding }}.sh" --repo-root "$GITHUB_WORKSPACE"; then
+          if [ "$STRICT" = "true" ]; then exit 1; fi
+          echo "::warning::${{ inputs.binding }} extraction or examples failed; it renders as not extracted"
+        fi
+
+    - name: Upload docstrings
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-docs-${{ inputs.binding }}
+        path: ${{ github.workspace }}/build/api-docs/${{ inputs.binding }}.json
+        if-no-files-found: warn
+        retention-days: 7

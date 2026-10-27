@@ -1,3 +1,12 @@
 /Manifest.toml
 build/*
-build/*/*
+build/*/*/public/
+/resources/
+/.hugo_build.lock
+# Assembled from project bundles by tools/assemble.py
+/content/*/
+!/content/quickstart/
+/static/*/
+!/static/css/
+/data/projects/
+__pycache__/

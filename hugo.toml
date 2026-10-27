@@ -1,0 +1,50 @@
+baseURL = "https://earthsci.dev/"
+languageCode = "en-us"
+title = "EarthSci"
+# No theme: layouts are provided directly under layouts/.
+
+enableRobotsTXT = true
+# Content comes from other repos' bundles, so git info is not meaningful.
+enableGitInfo = false
+
+[params]
+  description = "Documentation for the EarthSciML software ecosystem."
+  repoURL = "https://github.com/EarthSciML"
+  # Client-side Pagefind search. CI runs `pagefind --site public` after the
+  # Hugo build; the UI script no-ops when the index is absent (local builds).
+  pagefind = true
+
+# Taxonomies used by the generated catalogs (EarthSciDiscretizations and
+# EarthSciModels). Hugo taxonomies are site-wide, so their pages live at
+# /domains/..., /families/... rather than under a project; tools/assemble.py
+# leaves links to these prefixes alone (projects.toml global_prefixes).
+[taxonomies]
+  family = "families"
+  op = "ops"
+  bc = "bcs"
+  domain = "domains"
+  component_type = "component_types"
+  subdomain = "subdomains"
+  tag = "tags"
+
+[markup]
+  [markup.goldmark.renderer]
+    # Allow raw HTML in generated markdown (<details>, <img>, <figure>).
+    unsafe = true
+  # Pass math delimiters through untouched so Goldmark does not mangle LaTeX;
+  # KaTeX auto-render picks up the raw `$$...$$` / `\(...\)` in the HTML.
+  [markup.goldmark.extensions.passthrough]
+    enable = true
+    [markup.goldmark.extensions.passthrough.delimiters]
+      block = [["\\[", "\\]"], ["$$", "$$"]]
+      inline = [["\\(", "\\)"]]
+  [markup.highlight]
+    style = "github"
+    lineNos = false
+    codeFences = true
+
+[outputs]
+  home = ["HTML"]
+  section = ["HTML"]
+  taxonomy = ["HTML"]
+  term = ["HTML"]

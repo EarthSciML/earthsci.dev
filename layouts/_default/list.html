@@ -1,0 +1,35 @@
+{{ define "main" }}
+<section class="listing">
+  <header>
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p class="lede">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ with .Content }}<div class="listing-intro">{{ . }}</div>{{ end }}
+
+  {{/* The home page and each project's landing page carry curated links in
+       their content, so they get no automatic page list. Taxonomy term pages
+       list their members. */}}
+  {{ if not (or .IsHome (and .IsSection .Parent.IsHome)) }}
+    {{ $pages := .RegularPagesRecursive }}
+    {{ if $pages }}
+      <ul class="page-list catalog-list">
+        {{ range $pages.ByTitle }}
+          <li>
+            <a href="{{ .RelPermalink }}">
+              <strong>{{ or .Title (replace (path.BaseName .File.Path) "-" " " | humanize) }}</strong>
+            </a>
+            {{ with .Params.component_type }}<span class="badge badge-type">{{ . }}</span>{{ end }}
+            {{ with .Params.domain }}<span class="badge badge-domain">{{ . }}</span>{{ end }}
+            {{ with .Params.subdomain }}<span class="badge badge-subdomain">{{ . }}</span>{{ end }}
+            {{ with .Params.families }}{{ range . }}<span class="badge badge-family">{{ . }}</span>{{ end }}{{ end }}
+            {{ with .Params.ops }}{{ range . }}<span class="badge badge-kind">{{ . }}</span>{{ end }}{{ end }}
+            {{ with .Params.bcs }}{{ range . }}<span class="badge badge-accuracy">{{ . }}</span>{{ end }}{{ end }}
+            {{ with .Params.description }}<p>{{ . }}</p>{{ end }}
+          </li>
+        {{ end }}
+      </ul>
+    {{ end }}
+  {{ end }}
+</section>
+{{ end }}

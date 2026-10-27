@@ -1,0 +1,48 @@
+# The projects whose documentation is assembled into this site. `id` is the URL
+# slug (earthsci.dev/<id>/) and must match `id` in the repo's docs/site.toml.
+# Each repo publishes its docs bundle on the `docs-bundle` branch (DESIGN.md).
+
+# Root-relative link prefixes that are NOT project-relative (site-wide Hugo
+# taxonomies, see hugo.toml). assemble.py does not prefix these with /<id>.
+global_prefixes = ["domains", "component_types", "subdomains", "families", "ops", "bcs", "tags", "pagefind"]
+
+# How many minor-version series of each project's API reference the site keeps
+# (the newest patch of each; `dev` and `latest` are always kept). A project can
+# override it with its own `max_minor_versions`. 0 keeps everything.
+max_minor_versions = 8
+
+[[project]]
+id = "ast"
+repo = "EarthSciML/EarthSciAST"
+title = "EarthSciAST"
+order = 10
+
+[[project]]
+id = "io"
+repo = "EarthSciML/EarthSciIO"
+title = "EarthSciIO"
+order = 20
+
+[[project]]
+id = "integrator"
+repo = "EarthSciML/EarthSciIntegrator"
+title = "EarthSciIntegrator"
+order = 30
+
+[[project]]
+id = "astdiff"
+repo = "EarthSciML/EarthSciASTDiff"
+title = "EarthSciASTDiff"
+order = 40
+
+[[project]]
+id = "discretizations"
+repo = "EarthSciML/EarthSciDiscretizations"
+title = "EarthSciDiscretizations"
+order = 50
+
+[[project]]
+id = "models"
+repo = "EarthSciML/EarthSciModels"
+title = "EarthSciModels"
+order = 60

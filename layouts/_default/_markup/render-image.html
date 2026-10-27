@@ -1,0 +1,25 @@
+{{- /*
+  Markdown image render hook.
+
+  Hugo does NOT prefix the site's baseURL onto root-relative ("/foo") image
+  destinations in markdown content. If the site is ever republished under a
+  path prefix (e.g. https://example.com/sub/), an emitted ![](/plots/x.png)
+  renders as <img src="/plots/x.png">, which the browser resolves at the apex
+  (example.com/plots/x.png → 404) instead of inside the project prefix
+  (example.com/sub/plots/x.png).
+
+  Generated rule pages emit root-relative plot refs by design — the asset
+  is copied to docs/static/plots/<slug>/. Run every root-relative
+  destination through relURL so the prefix is applied, while leaving
+  protocol-relative ("//host/x"), absolute ("https://..."), and
+  page-relative ("foo.png") destinations untouched.
+*/ -}}
+{{- $dest := .Destination -}}
+{{- if and (hasPrefix $dest "/") (not (hasPrefix $dest "//")) -}}
+  {{- /* relURL leaves leading-slash paths unchanged; trim the slash first
+        so the baseURL path component is prepended. */ -}}
+  {{- $dest = strings.TrimPrefix "/" $dest | relURL -}}
+{{- end -}}
+<img src="{{ $dest | safeURL }}" alt="{{ .PlainText }}"
+{{- with .Title }} title="{{ . }}"{{ end -}}
+ loading="lazy" />
