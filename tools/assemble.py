@@ -254,8 +254,9 @@ def main(argv: list[str] | None = None) -> int:
     if skipped:
         print(f"assemble.py: skipped (no bundle): {', '.join(skipped)}", file=sys.stderr)
     if not done:
-        print("assemble.py: no project bundles were assembled", file=sys.stderr)
-        return 1
+        # Not an error: before the first source repo publishes a bundle the site
+        # is just the intro and quick start.
+        print("::warning::assemble.py: no project bundles were assembled", file=sys.stderr)
     return 0
 
 
