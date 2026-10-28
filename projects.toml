@@ -6,10 +6,10 @@
 # taxonomies, see hugo.toml). assemble.py does not prefix these with /<id>.
 global_prefixes = ["domains", "component_types", "subdomains", "families", "ops", "bcs", "tags", "pagefind"]
 
-# How many minor-version series of each project's API reference the site keeps
+# How many minor-version series of each project's docs the site keeps
 # (the newest patch of each; `dev` and `latest` are always kept). A project can
 # override it with its own `max_minor_versions`. 0 keeps everything.
-max_minor_versions = 8
+max_minor_versions = 5
 
 [[project]]
 id = "ast"

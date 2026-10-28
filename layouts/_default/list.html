@@ -8,9 +8,10 @@
   {{ with .Content }}<div class="listing-intro">{{ . }}</div>{{ end }}
 
   {{/* The home page and each project's landing page carry curated links in
-       their content, so they get no automatic page list. Taxonomy term pages
+       their content (the version roots too), so they get no automatic page list. Taxonomy term pages
        list their members. */}}
-  {{ if not (or .IsHome (and .IsSection .Parent.IsHome)) }}
+  {{ $vi := partial "version-info.html" . }}
+  {{ if not (or .IsHome (and .IsSection .Parent.IsHome) (and $vi.inproject (eq $vi.rel "") .IsSection)) }}
     {{ $pages := .RegularPagesRecursive }}
     {{ if $pages }}
       <ul class="page-list catalog-list">

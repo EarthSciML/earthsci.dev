@@ -1,0 +1,31 @@
+{{/* Where a page sits in its project's versioned docs. Every project is served
+     as `latest` at /<id>/ and again, version by version, at /<id>/<version>/
+     (tools/assemble.py). Returns a dict: inproject, id, name (the version this
+     page documents, "" for the latest tree), root (URL path of this page's
+     tree), rel (the page's path below that root), proj (the project's `versions`
+     data: latest, latest_is_release, list), latest, nav (the project nav for
+     this version) and indexed (only the latest copy goes to search). */}}
+{{ $path := strings.TrimSuffix "/" .Path }}
+{{ $id := .Section }}
+{{ $res := dict "inproject" false "indexed" true "name" "" "rel" "" "nav" slice }}
+{{ with index site.Data.projects $id }}
+  {{ $data := . }}
+  {{ $proj := .versions | default dict }}
+  {{ $prefix := printf "/%s" $id }}
+  {{ $rest := strings.TrimPrefix $prefix $path }}
+  {{ $name := "" }}
+  {{ $root := printf "%s/" $prefix }}
+  {{ if findRE `^/(dev|v[0-9][^/]*)(/|$)` $rest 1 }}
+    {{ $name = index (findRE `^/[^/]+` $rest 1) 0 | strings.TrimPrefix "/" }}
+    {{ $root = printf "%s/%s/" $prefix $name }}
+    {{ $rest = strings.TrimPrefix (printf "/%s" $name) $rest }}
+  {{ end }}
+  {{ $nav := $data.nav }}
+  {{ with $name }}{{ with index $data.nav_by_version . }}{{ $nav = . }}{{ end }}{{ end }}
+  {{ $res = merge $res (dict
+      "inproject" true "id" $id "name" $name "root" $root
+      "rel" (strings.TrimPrefix "/" $rest)
+      "proj" $proj "latest" ($proj.latest | default "")
+      "nav" $nav "indexed" (eq $name "")) }}
+{{ end }}
+{{ return $res }}
