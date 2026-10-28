@@ -1,6 +1,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+{{ $vi := partial "version-info.html" . }}
+{{ if and $vi.inproject $vi.name }}<meta name="robots" content="noindex">{{ end }}
 {{ with or .Params.description site.Params.description }}<meta name="description" content="{{ . }}">{{ end }}
 <link rel="stylesheet" href="{{ "css/site.css" | relURL }}">
 {{ if or .Params.api_tabs (eq .Type "api") }}{{ partial "api-tabs.html" . }}{{ end }}

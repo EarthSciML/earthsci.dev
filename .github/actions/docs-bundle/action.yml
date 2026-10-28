@@ -2,7 +2,7 @@ name: Build and publish docs bundle
 description: >-
   Render the API reference (if the repo has docs/api/config.toml), build this
   repo's docs bundle, and, on a push to the default branch (version `dev`) or
-  of a release tag vX.Y.Z (that version's API reference), merge it into the
+  of a release tag vX.Y.Z (that version of the docs), merge it into the
   `docs-bundle` branch and tell EarthSciML/earthsci.dev to rebuild the site.
   Run after checkout, any prebuild steps (docs/site.toml `prebuild`), and
   actions/download-artifact for the api-docs-* artifacts. See DESIGN.md in
@@ -25,7 +25,7 @@ inputs:
     default: 'false'
   version:
     description: >-
-      The API-reference version this run documents: `dev` or a tag vX.Y.Z.
+      The version of the docs this run documents: `dev` or a tag vX.Y.Z.
       `auto` is the tag name on a tag push and `dev` otherwise.
     required: false
     default: auto
@@ -105,9 +105,9 @@ runs:
 
     # The bundle is merged into the orphan `docs-bundle` branch of the source
     # repo itself (tools/publish.py), using the job's own token (the job needs
-    # `contents: write`). The branch keeps one rendered API tree per version, so
-    # a tag build adds its version and leaves main's content and the other
-    # versions alone. The site build fetches this branch from every project, so
+    # `contents: write`). The branch keeps one complete docs tree per version
+    # (dev/, vX.Y.Z/), so a tag build adds its version and leaves the others
+    # alone. The site build fetches this branch from every project, so
     # it never depends on which repo triggered it.
     - name: Publish docs-bundle branch
       if: steps.decide.outputs.publish == 'true'

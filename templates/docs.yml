@@ -7,9 +7,9 @@ name: docs
 # On push to main: extract API docs, build the docs bundle, merge it into this
 # repo's `docs-bundle` branch as the `dev` version and notify earthsci.dev,
 # which rebuilds the site.
-# On a push of a release tag vX.Y.Z: the same from the code at that tag, but
-# only the API reference is published, as that version (the narrative docs
-# always come from main). The site then offers the version in its selector.
+# On a push of a release tag vX.Y.Z: the same, from the code at that tag (every
+# prebuild step runs, so write none of them to skip tags), published as that
+# version of the whole docs. The site then offers it in the version selector.
 # On pull requests: the same, minus publishing and notifying (validation only).
 #
 # Needs the repo (or org) secrets DOCS_APP_ID and DOCS_APP_PRIVATE_KEY: a GitHub

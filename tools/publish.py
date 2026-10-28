@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Merge a freshly built docs bundle into the source repo's `docs-bundle` branch.
 
-The branch is a single orphan commit holding the whole bundle: the latest
-narrative content from main plus one rendered API tree per version
-(tools/versions.py). Publishing a tag adds or replaces that tag's tree and keeps
-everything else; publishing `dev` replaces the content and the dev tree. The
-branch is rewritten as one commit, so history does not grow, but it is pushed
+The branch is a single orphan commit with one complete docs tree per version
+(`dev/`, `v1.2.0/`, ... each holding bundle.json, content/ and static/) plus
+versions.json (tools/versions.py). Publishing a version adds or replaces its
+directory and keeps the others; a branch in the older flat layout is migrated to
+`dev/` first. The branch is rewritten as one commit, so history does not grow, but it is pushed
 with a lease so two concurrent publishes (a main push and a tag push) cannot
 overwrite each other: the loser re-clones, re-merges and retries.
 

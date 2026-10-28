@@ -1,32 +1,32 @@
-{{/* Version selector and "old/dev version" banner for the API reference, like
-     Documenter.jl's. Driven by the project's `api` data (latest + versions),
-     which tools/assemble.py derives from the bundle's api/<version>/ trees. */}}
-{{ $v := partial "api-version-info.html" . }}
-{{ if and $v.inapi $v.proj.versions }}
+{{/* Version selector and "old/dev version" banner for every page of a project,
+     like Documenter.jl's. Driven by the project's `versions` data (latest +
+     list), which tools/assemble.py derives from the bundle's version trees. */}}
+{{ $v := partial "version-info.html" . }}
+{{ if and $v.inproject $v.proj.list }}
   {{ $latest := $v.latest }}
   {{ $cur := $v.name | default $latest }}
-  {{ $base := printf "/%s/generated/api/" $v.id }}
+  {{ $base := printf "/%s/" $v.id }}
   {{ $latestIsRelease := $v.proj.latest_is_release }}
-  <div class="api-version" data-root="{{ $v.url_root | relURL }}" data-rel="{{ $v.rel }}">
-    <details class="api-version-picker">
+  <div class="doc-version" data-rel="{{ $v.rel }}">
+    <details class="doc-version-picker">
       <summary>Version: <strong>{{ if eq $v.name "" }}{{ if $latestIsRelease }}latest ({{ $latest }}){{ else }}dev{{ end }}{{ else }}{{ $cur }}{{ end }}</strong></summary>
       <ul>
         {{ if $latestIsRelease }}
           <li><a href="{{ $base | relURL }}" data-version="">latest ({{ $latest }})</a></li>
         {{ end }}
-        {{ range $v.proj.versions }}
+        {{ range $v.proj.list }}
           <li><a href="{{ printf "%s%s/" $base . | relURL }}" data-version="{{ . }}">{{ . }}{{ if eq . "dev" }} (main){{ end }}</a></li>
         {{ end }}
       </ul>
     </details>
     {{ if and (eq $v.name "dev") $latestIsRelease }}
-      <p class="api-version-banner" role="note">This is the documentation for the <strong>development</strong> version.
+      <p class="doc-version-banner" role="note">This is the documentation for the <strong>development</strong> version.
       For the latest release, see <a href="{{ $base | relURL }}">{{ $latest }}</a>.</p>
     {{ else if and $v.name (ne $v.name "dev") (strings.Contains $v.name "-") }}
-      <p class="api-version-banner" role="note">This is the documentation for the <strong>pre-release {{ $v.name }}</strong>.
+      <p class="doc-version-banner" role="note">This is the documentation for the <strong>pre-release {{ $v.name }}</strong>.
       {{ if $latestIsRelease }}For the latest release, see <a href="{{ $base | relURL }}">{{ $latest }}</a>.{{ end }}</p>
     {{ else if and $v.name (ne $v.name "dev") (ne $v.name $latest) }}
-      <p class="api-version-banner" role="note">This is the documentation for the <strong>older version {{ $v.name }}</strong>.
+      <p class="doc-version-banner" role="note">This is the documentation for the <strong>older version {{ $v.name }}</strong>.
       For the latest release, see <a href="{{ $base | relURL }}">{{ $latest }}</a>.</p>
     {{ end }}
   </div>

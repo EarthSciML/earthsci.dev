@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 """Build a docs bundle from a source repo (DESIGN.md, "Source-repo docs contract").
 
-A bundle is a directory
+A bundle is the complete docs of ONE version, a directory
 
-    bundle.json   id, title, description, repo, nav, sha
-    content/      the repo's Hugo content tree (including generated/ pages,
-                  but not the API reference)
+    bundle.json   id, title, description, repo, nav, sha, version
+    content/      the repo's Hugo content tree, including generated/ pages and
+                  the API reference (generated/api)
     static/       the repo's static assets (optional)
-    api/<ver>/    the rendered API reference (content/generated/api) for one
-                  version: `dev` for main, `vX.Y.Z` for a release tag
 
-A tag build (--version vX.Y.Z) carries only api/<ver>/ and bundle.json: the
-narrative docs always come from main. tools/publish.py merges a bundle into the
-`docs-bundle` branch, which keeps every version's API tree (tools/versions.py).
-
-which the docs-bundle action pushes to the `docs-bundle` branch of the source
-repo and tools/assemble.py later copies into the site.
+`--version dev` (the default) is main; `--version vX.Y.Z` is a release tag, built
+from the code and docs config at that tag. tools/publish.py merges the bundle
+into the `docs-bundle` branch of the source repo as the directory `<version>/`
+(tools/versions.py), and tools/assemble.py later copies every version into the
+site.
 
     python3 tools/bundle.py --repo-root . --out build/bundle
 """
@@ -90,16 +87,10 @@ def build_bundle(repo_root: Path, out: Path, version: str = versions.DEV) -> dic
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    generated_api = content / "generated" / "api"
-    has_api = (generated_api / "_index.md").is_file()
-    if version == versions.DEV:
-        shutil.copytree(content, out / "content",
-                        ignore=lambda d, names: set(IGNORED(d, names)) | (
-                            {"api"} if Path(d) == content / "generated" else set()))
-        if static.is_dir():
-            shutil.copytree(static, out / "static", ignore=IGNORED)
-    if has_api:
-        shutil.copytree(generated_api, out / "api" / version, ignore=IGNORED)
+    has_api = (content / "generated" / "api" / "_index.md").is_file()
+    shutil.copytree(content, out / "content", ignore=IGNORED)
+    if static.is_dir():
+        shutil.copytree(static, out / "static", ignore=IGNORED)
 
     nav = [dict(n) for n in cfg.get("nav", [])]
     if has_api and not any(n["path"].strip("/") == "generated/api" for n in nav):

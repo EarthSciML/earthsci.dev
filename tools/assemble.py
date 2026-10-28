@@ -2,16 +2,18 @@
 """Assemble every project's docs bundle into this Hugo site.
 
 For each [[project]] in projects.toml: obtain its bundle (the `docs-bundle`
-branch of its repo, or a local directory given with --local), copy
-content/ -> content/<id>/ and static/ -> static/<id>/, prefix root-relative
-links with /<id>, and write data/projects/<id>.json for the header. A project
-with no bundle is skipped with a warning.
+branch of its repo, or a local directory given with --local), copy it into
+content/<id>/ and static/<id>/, prefix root-relative links with /<id>, and write
+data/projects/<id>.json for the header. A project with no bundle is skipped with
+a warning.
 
-The API reference is versioned: the bundle holds api/<version>/ trees
+Docs are versioned as a whole: the bundle holds one complete tree per version
 (`dev`, `vX.Y.Z`; see versions.py). The newest release (or `dev` when there is
-none) is copied to /<id>/generated/api/ and every kept version to
-/<id>/generated/api/<version>/, with links inside each version tree pointing
-at that same version.
+none) is `latest`, served at /<id>/; every kept version is served again at
+/<id>/<version>/, with its links pointing at that same version. Only `latest`
+contributes to the site-wide taxonomies, so the versioned copies lose their
+taxonomy (and url/alias) front matter. A bundle in the older flat layout, or a
+single tree built by bundle.py, is treated as one version.
 
     python3 tools/assemble.py
     python3 tools/assemble.py --local discretizations=/path/to/bundle
@@ -27,6 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 try:
@@ -38,8 +41,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import versions  # noqa: E402
 
 BRANCH = "docs-bundle"
-API_PATH = "generated/api"
-DEFAULT_MAX_MINOR = 8
+DEFAULT_MAX_MINOR = 5
+# Front matter that must not repeat in a versioned copy besides the taxonomies.
+VERSIONED_DROP = ("url", "aliases")
 TEXT_SUFFIXES = {".md", ".html"}
 
 _FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
@@ -54,39 +58,23 @@ _LINK_PATTERNS = [
 ]
 
 
-_API_TARGET = r"(/" + re.escape(API_PATH) + r"(?=[/?#)\"'\s]|$))"
-_VERSION_PATTERNS = [re.compile(p.pattern.replace(r"(/(?!/))", _API_TARGET), p.flags)
-                     for p in _LINK_PATTERNS]
-
-
-def _prefixer(project_id: str, skip: set[str]):
+def _prefixer(project_id: str, skip: set[str], base: str):
     def repl(m: re.Match, text: str) -> str:
         rest = text[m.end():]
         first = re.split(r"[/?#)\"'\s]", rest, maxsplit=1)[0]
         if first == project_id or first in skip:
             return m.group(0)
-        return f"{m.group(1)}/{project_id}/"
-    return repl
-
-
-def _version_repl(version: str):
-    def repl(m: re.Match, text: str) -> str:
-        if re.match(r"/%s(?=[/?#)\"'\s]|$)" % re.escape(version), text[m.end():]):
-            return m.group(0)  # already versioned
-        return f"{m.group(1)}/{API_PATH}/{version}"
+        return f"{m.group(1)}{base}/"
     return repl
 
 
 def rewrite_links(text: str, project_id: str, skip: set[str] = frozenset(),
-                  api_version: str | None = None) -> str:
-    """Prefix root-relative links with /<project_id>, leaving code alone.
-
-    With `api_version`, links into the API reference (/generated/api...) are
-    first pointed at that version of it (/generated/api/<version>...)."""
-    repl = _prefixer(project_id, set(skip))
+                  version: str | None = None) -> str:
+    """Prefix root-relative links with /<project_id> (/<project_id>/<version> for
+    a versioned copy), leaving code alone."""
+    base = f"/{project_id}/{version}" if version else f"/{project_id}"
+    repl = _prefixer(project_id, set(skip), base)
     patterns = [(p, repl) for p in _LINK_PATTERNS]
-    if api_version:
-        patterns = [(p, _version_repl(api_version)) for p in _VERSION_PATTERNS] + patterns
     out: list[str] = []
     fence: str | None = None
     for line in text.splitlines(keepends=True):
@@ -111,12 +99,12 @@ def rewrite_links(text: str, project_id: str, skip: set[str] = frozenset(),
 
 
 def rewrite_tree(root: Path, project_id: str, skip: set[str],
-                 api_version: str | None = None) -> int:
+                 version: str | None = None) -> int:
     n = 0
     for p in root.rglob("*"):
         if p.suffix in TEXT_SUFFIXES and p.is_file():
             old = p.read_text(encoding="utf-8")
-            new = rewrite_links(old, project_id, skip, api_version)
+            new = rewrite_links(old, project_id, skip, version)
             if new != old:
                 p.write_text(new, encoding="utf-8")
                 n += 1
@@ -152,60 +140,147 @@ def _clean(site: Path, pid: str) -> None:
             p.unlink()
 
 
-def assemble_api(site: Path, pid: str, bundle: Path, skip: set[str], max_minor: int) -> dict:
-    """Place the bundle's versioned API trees; returns the data for the header."""
-    found = versions.scan(bundle / "api")
-    kept = versions.order(versions.prune(found, max_minor))
-    top = versions.effective_latest(kept)
-    target = site / "content" / pid / API_PATH
-    if top:
-        # The default copy: links keep pointing at the unversioned /generated/api/.
-        shutil.copytree(bundle / "api" / top, target, dirs_exist_ok=True)
-        rewrite_tree(target, pid, skip)
-        for name in kept:
-            dest = target / name
-            if dest.exists():
-                shutil.rmtree(dest)
-            shutil.copytree(bundle / "api" / name, dest)
-            rewrite_tree(dest, pid, skip, api_version=name)
-    return {
-        "latest": top,
-        "latest_is_release": bool(top and versions.is_release(top)),
-        "versions": kept,
-    }
+def strip_front_matter_keys(text: str, keys) -> str:
+    """Drop the top-level `keys` from a page's YAML (---) or TOML (+++) front
+    matter, with their (indented or `- `) continuation lines."""
+    keys = set(keys)
+    m = re.match(r"(---|\+\+\+)[ \t]*\r?\n", text)
+    if not m or not keys:
+        return text
+    delim = m.group(1)
+    end = re.search(r"^%s[ \t]*\r?$" % re.escape(delim), text[m.end():], re.M)
+    if not end:
+        return text
+    head = text[m.end():m.end() + end.start()]
+    rest = text[m.end() + end.start():]
+    out: list[str] = []
+    skipping = False
+    depth = 0
+    in_tables = False
+    for line in head.splitlines(keepends=True):
+        if delim == "---":
+            top = re.match(r"([A-Za-z_][\w-]*)\s*:", line)
+            if top:
+                skipping = top.group(1) in keys
+            elif skipping and not (line[:1] in " \t" or line.startswith("- ")
+                                   or line.strip() in ("", "-")):
+                skipping = False
+        else:
+            if depth > 0:
+                depth += line.count("[") - line.count("]")
+                continue
+            if line.lstrip().startswith("["):
+                in_tables = True
+            top = None if in_tables else re.match(r"\s*([A-Za-z_][\w-]*)\s*=", line)
+            skipping = bool(top and top.group(1) in keys)
+            if skipping:
+                depth = max(0, line.count("[") - line.count("]"))
+        if not skipping:
+            out.append(line)
+    return text[:m.end()] + "".join(out) + rest
 
 
-def assemble_project(site: Path, project: dict, bundle: Path, skip: set[str],
-                     max_minor: int = DEFAULT_MAX_MINOR) -> dict:
+def strip_tree(root: Path, keys) -> int:
+    n = 0
+    for p in root.rglob("*.md"):
+        old = p.read_text(encoding="utf-8")
+        new = strip_front_matter_keys(old, keys)
+        if new != old:
+            p.write_text(new, encoding="utf-8")
+            n += 1
+    return n
+
+
+def taxonomy_keys(site: Path) -> set[str]:
+    """Front matter keys that feed the site-wide Hugo taxonomies (singular and
+    plural names), from hugo.toml."""
+    cfg_path = site / "hugo.toml"
+    if not cfg_path.is_file():
+        return set()
+    with cfg_path.open("rb") as f:
+        tax = tomllib.load(f).get("taxonomies", {})
+    return set(tax) | set(tax.values())
+
+
+def version_trees(bundle: Path, scratch: Path) -> dict[str, Path]:
+    """The version trees in a bundle: {version: tree directory}.
+
+    A bundle is a `docs-bundle` checkout (one directory per version), a bundle in
+    the older flat layout (main plus api/<version>/), or a single tree from
+    tools/bundle.py, which is the version its bundle.json names (default `dev`)."""
+    found = versions.scan(bundle)
+    if found:
+        return {n: bundle / n for n in found}
+    if not (bundle / "bundle.json").is_file():
+        return {}
+    flat = scratch / "flat"
+    shutil.copytree(bundle, flat, ignore=shutil.ignore_patterns("api"))
+    if (bundle / "api" / versions.DEV).is_dir():
+        (flat / "content" / "generated").mkdir(parents=True, exist_ok=True)
+        shutil.copytree(bundle / "api" / versions.DEV, flat / "content" / "generated" / "api",
+                        dirs_exist_ok=True)
+    name = json.loads((bundle / "bundle.json").read_text(encoding="utf-8")).get("version", "")
+    return {name if versions.is_version(name) else versions.DEV: flat}
+
+
+def has_bundle(bundle: Path) -> bool:
+    return bool(versions.scan(bundle)) or (bundle / "bundle.json").is_file()
+
+
+def place_tree(site: Path, project: dict, tree: Path, skip: set[str], drop: set[str],
+               version: str | None) -> dict:
+    """Copy one version tree into content/<id>[/<version>] and static/<id>[/<version>]
+    with links rewritten; returns its bundle.json. `version` None is `latest`."""
     pid = project["id"]
-    meta = json.loads((bundle / "bundle.json").read_text(encoding="utf-8"))
+    meta = json.loads((tree / "bundle.json").read_text(encoding="utf-8"))
     if meta["id"] != pid:
         raise SystemExit(f"assemble.py: bundle for {project['repo']} has id "
                          f"{meta['id']!r}, projects.toml says {pid!r}")
-    _clean(site, pid)
-    (site / "content" / pid).mkdir(parents=True)
-    if (bundle / "content").is_dir():
-        shutil.copytree(bundle / "content", site / "content" / pid, dirs_exist_ok=True)
-    if (bundle / "static").is_dir():
-        shutil.copytree(bundle / "static", site / "static" / pid)
-    rewrite_tree(site / "content" / pid, pid, skip)
-    api = assemble_api(site, pid, bundle, skip, project.get("max_minor_versions", max_minor))
-
-    index = site / "content" / pid / "_index.md"
+    sub = f"{pid}/{version}" if version else pid
+    content = site / "content" / sub
+    content.mkdir(parents=True, exist_ok=True)
+    if (tree / "content").is_dir():
+        shutil.copytree(tree / "content", content, dirs_exist_ok=True)
+    if (tree / "static").is_dir():
+        shutil.copytree(tree / "static", site / "static" / sub, dirs_exist_ok=True)
+    if version:
+        strip_tree(content, drop)
+    rewrite_tree(content, pid, skip, version)
+    index = content / "_index.md"
     if not index.exists():
         index.write_text(
             f'---\ntitle: "{meta["title"]}"\ndescription: "{meta["description"]}"\n---\n',
             encoding="utf-8",
         )
+    return meta
+
+
+def assemble_project(site: Path, project: dict, bundle: Path, skip: set[str],
+                     max_minor: int = DEFAULT_MAX_MINOR, drop: set[str] = frozenset()) -> dict:
+    pid = project["id"]
+    _clean(site, pid)
+    with tempfile.TemporaryDirectory(prefix="assemble-") as scratch:
+        trees = version_trees(bundle, Path(scratch))
+        kept = versions.order(versions.prune(list(trees), project.get("max_minor_versions", max_minor)))
+        top = versions.effective_latest(kept)
+        # `latest` first: the versions go in subdirectories of its tree.
+        top_meta = place_tree(site, project, trees[top], skip, set(), None)
+        metas = {name: place_tree(site, project, trees[name], skip, set(drop) | set(VERSIONED_DROP), name)
+                 for name in kept}
     data = {
         "id": pid,
-        "title": meta.get("title") or project["title"],
-        "description": meta["description"],
-        "repo": meta.get("repo") or project["repo"],
+        "title": top_meta.get("title") or project["title"],
+        "description": top_meta["description"],
+        "repo": top_meta.get("repo") or project["repo"],
         "order": project.get("order", 100),
-        "nav": meta.get("nav", []),
-        "sha": meta.get("sha", ""),
-        "api": api,
+        "nav": top_meta.get("nav", []),
+        "sha": top_meta.get("sha", ""),
+        "versions": {
+            "latest": top,
+            "latest_is_release": bool(top and versions.is_release(top)),
+            "list": kept,
+        },
+        "nav_by_version": {name: m.get("nav", []) for name, m in metas.items()},
     }
     (site / "data" / "projects").mkdir(parents=True, exist_ok=True)
     (site / "data" / "projects" / f"{pid}.json").write_text(
@@ -227,6 +302,7 @@ def main(argv: list[str] | None = None) -> int:
     with (site / "projects.toml").open("rb") as f:
         cfg = tomllib.load(f)
     skip = set(cfg.get("global_prefixes", []))
+    drop = taxonomy_keys(site)
     max_minor = cfg.get("max_minor_versions", DEFAULT_MAX_MINOR)
     local = dict(item.split("=", 1) for item in args.local)
     workdir = args.workdir or site / "build" / "bundles"
@@ -238,17 +314,17 @@ def main(argv: list[str] | None = None) -> int:
             continue
         if pid in local:
             bundle = Path(local[pid])
-            ok = (bundle / "bundle.json").is_file()
+            ok = has_bundle(bundle)
             if not ok:
-                print(f"assemble.py: warning: {bundle}/bundle.json not found", file=sys.stderr)
+                print(f"assemble.py: warning: no bundle found in {bundle}", file=sys.stderr)
         else:
             bundle = workdir / pid
-            ok = fetch_bundle(project["repo"], bundle) and (bundle / "bundle.json").is_file()
+            ok = fetch_bundle(project["repo"], bundle) and has_bundle(bundle)
         if not ok:
             _clean(site, pid)
             skipped.append(pid)
             continue
-        data = assemble_project(site, project, bundle, skip, max_minor)
+        data = assemble_project(site, project, bundle, skip, max_minor, drop)
         done.append(pid)
         print(f"assemble.py: {pid}: {data['repo']}@{data['sha'][:8] or '?'}")
     if skipped:
