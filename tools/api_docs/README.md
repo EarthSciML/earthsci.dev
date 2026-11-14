@@ -27,6 +27,8 @@ tools/api_docs/render.py               joins the above -> <repo>/docs/content/ge
 tools/api_docs/plan.py                 prints the configured bindings as a JSON array (CI matrix)
 tools/api_docs/config.py               config loader; also a CLI for the shell scripts
 tools/api_docs/regions.py              example-region checker
+tools/api_docs/extract_lean.py         literate Lean chapters: <repo>/docs/lean/config.toml
+  -> <repo>/docs/content/generated/<chapter>/   one page per Lean module (§6)
 ```
 
 Generated pages link to each other by project-root-relative path
@@ -332,3 +334,79 @@ alone, and is what a binding script calls to fail fast on a bad marker.
 Render, then build the site from this repo's checkout with your repo's
 bundle (see the site's README). The generated pages are plain Hugo markdown
 with the tab markup the site's `api` layouts expect.
+
+## 6. Literate Lean chapters
+
+A specification written as commented Lean source is published as a chapter of
+the project's docs: a Hugo section with a landing page and one page per Lean
+module, read top to bottom like the source. `extract_lean.py` reads the source
+text only. It needs no Lean toolchain, Mathlib or build, so it runs in the
+docs job in about a second. It is not part of the API reference (that tree
+is per binding and per canonical operation); a chapter sits next to the
+project's narrative pages and is versioned with the rest of its docs.
+
+```bash
+python3 <earthsci.dev>/tools/api_docs/extract_lean.py --repo-root .   # Python 3.11+, standard library only
+```
+
+The `docs-bundle` action runs it whenever `docs/lean/config.toml` exists.
+`--sha` and `--repo-url` override the commit and repository of the source
+links (defaults: `git rev-parse HEAD`, and `repo` in `docs/site.toml`);
+`--strict` turns warnings (a module pattern that matches nothing) into errors.
+
+### 6.1 `docs/lean/config.toml`
+
+```toml
+root = "formal"                       # required: the Lean package; module A.B.C is <root>/A/B/C.lean
+repo_url = "https://github.com/..."   # optional; default https://github.com/<repo in docs/site.toml>
+
+[[chapter]]                           # one or more
+title = "Document formats"            # required: section title
+description = "..."                   # optional: the landing page's lede
+out = "docs/content/generated/document-formats"   # required; inside the content directory
+intro = "docs/lean/document-formats.md"           # optional: Markdown put first on the landing page
+modules = [                           # required, in reading order
+  "Esm.Document.Notation",            # one module (it must exist)
+  "Esm.Document.Math.*",              # its direct submodules, sorted
+  "Esm.Document.**",                  # every module below it, sorted
+]
+```
+
+A module is listed once, where it first appears, so explicit names fix the
+reading order and a trailing `**` pattern picks up modules added later
+without a configuration change. Put `out` under `docs/content/generated/`,
+which is never committed. List the chapter in `docs/site.toml`'s `[[nav]]`
+(path relative to the project, e.g. `generated/document-formats/`) if it
+should appear in the project header.
+
+### 6.2 What a page shows
+
+- **Module docs** (`/-! … -/`) are the prose, as Markdown. The first one's
+  `# heading` is the page title; the first sentence after it is the module's
+  entry on the landing page.
+- **Documented declarations** (a `/-- … -/` right before a command: `theorem`,
+  `lemma`, `def`, `abbrev`, `instance`, `structure`, `class`, `inductive`,
+  `example`, `opaque`, `axiom`, `macro`, `syntax`, `notation`, …) are blocks in
+  source order: the kind, the name (an anchor, the namespace-qualified name),
+  a `source` link to the declaration's lines at the building commit, the
+  signature as a `lean` code block, then the doc text. The signature runs up to
+  the top-level `:=`, `where` or first `|` alternative; a `structure`,
+  `inductive`, `class` or notation command is shown whole, with its field and
+  constructor docs. Declarations without a doc comment are left out; a module
+  page ends by saying how many undocumented lemmas it has.
+- **Theorems** are set apart (a tinted block) and marked **proved** when their
+  proof contains no `sorry` or `admit` and no file under `root` contains either
+  or declares an `axiom`. Comments and string literals are skipped when looking.
+  A theorem whose own proof has one is marked **sorry**.
+- A code span that names a module of the chapter, or a declaration of it as
+  seen from the namespace it is written in, links to that page or anchor.
+- Pages have front matter `type: lean`: the landing page uses
+  `layouts/lean/list.html` (its own table of contents, no automatic page list)
+  and module pages the default single layout. Links between pages are
+  project-root-relative (`/generated/document-formats/<module-slug>#<name>`),
+  where the slug is the module name in lower case with `-` for `.`.
+
+The code blocks are fenced as `lean`. Chroma's Lean 4 lexer (aliases `lean`,
+`lean4`) arrived in Chroma 2.17, first shipped in Hugo 0.147.0; the site's
+Hugo 0.131 renders the blocks unhighlighted until it is upgraded.
+

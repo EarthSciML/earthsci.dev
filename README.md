@@ -20,7 +20,7 @@ follows.
 | `projects.toml` | The projects in the site |
 | `tools/assemble.py`, `tools/bundle.py` | Bundle fetching/assembly and bundle building (tests in `tests/`) |
 | `tools/publish.py`, `tools/versions.py` | Merging a bundle into a repo's `docs-bundle` branch; version ordering, pruning and legacy-layout migration (`DESIGN.md`, "Versions") |
-| `tools/api_docs/` | Generalized API-reference extraction and rendering |
+| `tools/api_docs/` | Generalized API-reference extraction and rendering; literate Lean chapters (`extract_lean.py`) |
 | `.github/actions/` | Composite actions source repos use (`api-extract`, `docs-bundle`) |
 | `.github/workflows/site.yml` | Site build and deploy |
 | `templates/docs.yml` | The workflow a source repo installs |

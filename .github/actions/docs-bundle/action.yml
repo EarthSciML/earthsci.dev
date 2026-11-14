@@ -1,6 +1,7 @@
 name: Build and publish docs bundle
 description: >-
-  Render the API reference (if the repo has docs/api/config.toml), build this
+  Render the API reference (if the repo has docs/api/config.toml) and the
+  literate Lean chapters (if it has docs/lean/config.toml), build this
   repo's docs bundle, and, on a push to the default branch (version `dev`) or
   of a release tag vX.Y.Z (that version of the docs), merge it into the
   `docs-bundle` branch and tell EarthSciML/earthsci.dev to rebuild the site.
@@ -20,7 +21,7 @@ inputs:
     required: false
     default: auto
   strict:
-    description: Pass --strict to render.py (warnings fail the build).
+    description: Pass --strict to render.py and extract_lean.py (warnings fail the build).
     required: false
     default: 'false'
   version:
@@ -60,6 +61,21 @@ runs:
           python "$GITHUB_ACTION_PATH/../../../tools/api_docs/render.py" "${args[@]}"
         else
           echo "no docs/api/config.toml; skipping API reference"
+        fi
+
+    # Literate Lean chapters: Hugo pages written from commented Lean source
+    # (tools/api_docs/README.md, §6). Reads source text only; no Lean toolchain.
+    - name: Render Lean chapters
+      shell: bash
+      env:
+        STRICT: ${{ inputs.strict }}
+      run: |
+        if [[ -f docs/lean/config.toml ]]; then
+          args=(--repo-root .)
+          [[ "$STRICT" == "true" ]] && args+=(--strict)
+          python "$GITHUB_ACTION_PATH/../../../tools/api_docs/extract_lean.py" "${args[@]}"
+        else
+          echo "no docs/lean/config.toml; skipping Lean chapters"
         fi
 
     - name: Decide version and whether to publish

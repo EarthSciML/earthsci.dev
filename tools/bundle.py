@@ -61,6 +61,17 @@ def load_site_toml(repo_root: Path) -> dict:
     return cfg
 
 
+def missing_lean_chapters(repo_root: Path) -> list[str]:
+    """`out` of every chapter in docs/lean/config.toml with no generated landing page."""
+    path = repo_root / "docs" / "lean" / "config.toml"
+    if not path.is_file():
+        return []
+    with path.open("rb") as f:
+        chapters = tomllib.load(f).get("chapter", [])
+    return [c["out"] for c in chapters
+            if c.get("out") and not (repo_root / c["out"] / "_index.md").is_file()]
+
+
 def git_sha(repo_root: Path) -> str:
     try:
         return subprocess.run(
@@ -98,6 +109,11 @@ def build_bundle(repo_root: Path, out: Path, version: str = versions.DEV) -> dic
     elif not has_api and (repo_root / "docs" / "api" / "config.toml").is_file():
         print("bundle.py: warning: docs/api/config.toml exists but no generated "
               "API reference was found; run tools/api_docs/render.py first",
+              file=sys.stderr)
+
+    for missing in missing_lean_chapters(repo_root):
+        print(f"bundle.py: warning: docs/lean/config.toml lists the chapter {missing} but "
+              "it was not generated; run tools/api_docs/extract_lean.py first",
               file=sys.stderr)
 
     meta = {

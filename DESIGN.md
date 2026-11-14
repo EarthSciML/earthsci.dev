@@ -25,6 +25,7 @@ source repo (push to main)
     job bundle                       project prebuild steps, then
                                      uses EarthSciML/earthsci.dev/.github/actions/docs-bundle@main
         render API ref -> docs/content/generated/api/
+        render literate Lean chapters (docs/lean/config.toml) -> docs/content/generated/<chapter>/
         assemble the version's bundle (site.toml + content/ + static/)
         merge bundle into orphan branch `docs-bundle` of the SOURCE repo
           (one directory per version; tools/publish.py)
@@ -161,6 +162,24 @@ The extractors, the example runner scripts, `regions.py` and `render.py` take
 `--repo-root` and read this file; nothing project-specific is hard-coded in
 `tools/api_docs/`. Build output goes under `<repo>/build/` (gitignored).
 
+### `docs/lean/config.toml` (only for projects with literate Lean chapters)
+
+```toml
+root = "formal"                     # the Lean package
+[[chapter]]
+title = "Document formats"
+out = "docs/content/generated/document-formats"
+modules = ["Esm.Document.Notation", "Esm.Document.**"]
+```
+
+A chapter is a specification written as commented Lean source, published as
+one page per module. The `docs-bundle` action runs
+`tools/api_docs/extract_lean.py` before bundling; it reads source text only (no
+Lean build). The pages land under `generated/` like every other generated
+content, are versioned with the rest of the project's docs, and appear in the
+header through an ordinary `[[nav]]` entry. Schema and page format:
+`tools/api_docs/README.md`, §6.
+
 ### `api-surface.json`
 
 The manifest format is the one EarthSciAST already uses (`symbols` with
@@ -174,7 +193,7 @@ The manifest format is the one EarthSciAST already uses (`symbols` with
 hugo.toml, layouts/, static/css/   the shared site theme (no external theme)
 content/_index.md, content/quickstart/ ...   intro and quick start (owned here)
 projects.toml                      [[project]] id, repo, title, order
-tools/api_docs/                    generalized API-doc tooling + README
+tools/api_docs/                    generalized API-doc tooling + README (and extract_lean.py)
 tools/assemble.py                  bundle fetch/copy/link-rewrite (+ tests)
 tools/bundle.py                    builds a bundle from a source repo (used by docs-bundle)
 tools/publish.py, tools/versions.py  merge a bundle into the docs-bundle branch; version ordering/pruning
