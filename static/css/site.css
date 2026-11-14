@@ -280,3 +280,21 @@ details summary { cursor: pointer; color: #1f4f3a; }
 .doc-version-picker li a { display: block; padding: 0.2rem 0.8rem; text-decoration: none; }
 .doc-version-picker li a:hover { background: #eef3f8; }
 .doc-version-banner { margin: 0; padding: 0.15rem 0.6rem; background: #fff4d6; border: 1px solid #e6cf8a; border-radius: 4px; }
+
+/* Literate Lean chapters (tools/api_docs/extract_lean.py): one block per
+   documented declaration; theorem statements stand out. */
+.lean-meta { color: #555; font-size: 0.9em; }
+.lean-decl { border-left: 3px solid #b7c6d6; padding: 0.1rem 0 0.1rem 0.9rem; margin: 1.25rem 0; scroll-margin-top: 1rem; }
+.lean-decl pre { margin: 0.4rem 0; }
+.lean-decl > p:last-of-type { margin-bottom: 0.25rem; }
+.lean-theorem { border-left-color: #0b3a5b; background: #f3f6f9; padding: 0.4rem 0.9rem; border-radius: 0 4px 4px 0; }
+.lean-theorem pre { background: #fff; border: 1px solid #dde5ed; }
+.lean-decl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.5rem; }
+.lean-kind { font-size: 0.75em; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #555; }
+.lean-theorem .lean-kind { color: #0b3a5b; }
+.lean-name { text-decoration: none; }
+.lean-name code { font-weight: 600; }
+.lean-src { margin-left: auto; font-size: 0.85em; }
+.lean-badge { font-size: 0.75em; border-radius: 4px; padding: 0.02rem 0.45rem; }
+.lean-badge-proved { background: #d8eedd; color: #1c4a31; }
+.lean-badge-sorry { background: #f3d6d6; color: #6c1d1d; }

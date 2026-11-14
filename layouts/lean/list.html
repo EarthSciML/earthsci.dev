@@ -1,0 +1,15 @@
+{{ define "main" }}
+{{ $vi := partial "version-info.html" . }}
+{{/* A literate Lean chapter's landing page (tools/api_docs/extract_lean.py)
+     writes its own ordered table of contents, so it gets no automatic page
+     list. Module pages use _default/single.html. */}}
+<article class="page"{{ if $vi.indexed }} data-pagefind-body{{ else }} data-pagefind-ignore{{ end }}>
+  <header>
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p class="lede">{{ . }}</p>{{ end }}
+  </header>
+  <section class="content">
+    {{ .Content }}
+  </section>
+</article>
+{{ end }}
